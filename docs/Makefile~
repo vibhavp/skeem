@@ -1,7 +1,0 @@
-SHELL= /bin/sh
-.SUFFIXES:
-.SUFFIXES: .c .o
-CC= gcc
-
-
-NAME= skeem
