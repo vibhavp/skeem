@@ -1,0 +1,41 @@
+#ifndef TYPES_H
+#define TYPES_H
+
+enum num_types {
+  COMLEX,
+  DOUBLE,
+  INTEGER  
+};
+
+enum types {
+  NUMBER,
+  NUMBER_FLT,
+  CHAR,
+  STRING,
+  SYMBOL,
+  LIST,
+  PROCEDURE,
+  LPAREN,
+  RPAREN
+};
+
+struct numeric {
+  char type;
+  void *num;
+};
+
+typedef struct _object_t {
+  char type;
+  void *val;
+} object_t;
+
+struct cons {
+  object_t *car;
+  struct cons *cdr;
+};
+
+#define car(x) ((struct cons *(x))->car)
+#define cdr(x) ((struct cons *(x))->cdr)
+extern struct cons *tok_to_cons();
+
+#endif

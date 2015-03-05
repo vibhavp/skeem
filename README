@@ -1,0 +1,7 @@
+skeem was a scheme implementation in C which I started working on in 2012, but
+never completed due to real life. I uploaded the code on github to prevent it
+from being lost, if I ever wanted to restart work on it.
+
+HERE BE DRAGONS.
+The code here is ugly and incomplete (and horrendously over-engineered). It was something which
+I was writing the time was learning C. You have been warned.

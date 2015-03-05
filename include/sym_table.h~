@@ -1,0 +1,7 @@
+struct sym_entry {
+  char *name;
+  object_t *val;
+  struct sym_entry *next;
+};
+
+void sym_table_insert();
