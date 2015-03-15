@@ -24,23 +24,9 @@
 #include "grammar.h"
 
   static char **tokens = NULL, *types = NULL;
-  static int depth = 0, size = 0;
+  static unsigned int depth = 0, size = 0;
   void token_add(char *str, char type)
   {
-    /* if (size == 0) { */
-    /*   tokens = malloc(sizeof(char *) * 10); */
-    /*   types = malloc(sizeof(char) * 10); */
-    /*   tokens[0] = str; */
-    /*   types[0] = type; */
-    /*   size++; */
-    /* } */
-    /* else { */
-    /*   if (index > size) { */
-    /*     tokens = realloc(tokens, sizeof(tokens) + sizeof(char *)); */
-    /*     types = realloc(types, sizeof(types) + sizeof(char)); */
-    /*     tokens[index] = */
-    /*   } */
-    /* } */
     char **new_tokens, *new_types;
     if ((new_tokens  = realloc(tokens, sizeof(tokens)*(size) + sizeof(char)*strlen(str))) == NULL) {
       perror("malloc");
@@ -62,12 +48,16 @@
 
 %%
 [ \t] ;
--*[0-9]+           {token_add(strdup(yytext), NUMBER);}
--*[0-9]+\.[0-9]+   {token_add(strdup(yytext), NUMBER_FLT);}
+-*[0-9]+           {token_add(strdup(yytext), INTEGER);}
+-*[0-9]+\.[0-9]+   {token_add(strdup(yytext), FLOAT);}
+-                  {token_add(strdup(yytext), SYMBOL);}
++                  {token_add(strdup(yytext), SYMBOL);}
+*                  {token_add(strdup(yytext), SYMBOL);}
+/                  {token_add(strdup(yytext), SYMBOL);}
 \"([^\\\"]|\\.)*\" {token_add(strdup(yytext), STRING);};
 [a-zA-Z0-9]+       {token_add(strdup(yytext), SYMBOL);}
 \(                 {token_add(strdup("("), LPAREN); depth++;}
-\)                 {token_add(strdup(")"), RPAREN);depth--; unsigned int index = 1; if (depth == 0)repr(cons_to_object(tok_to_cons(tokens, types, &index)));}
+\)                 {token_add(strdup(")"), RPAREN);depth--; unsigned int index = 1; if (depth == 0)tok_to_cons(tokens, types, &index)));}
 %%
 
 main(int argc, char *argv[]) {

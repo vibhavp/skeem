@@ -22,10 +22,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#define cast_int(x) (*((int *)(x)))
-#define cast_float(x) (*((float *)(x)))
-#define cast_cons(x) ((struct cons *)(x))
-
 struct cons *cons_init()
 {
   struct cons *cell = NULL;
@@ -33,6 +29,17 @@ struct cons *cons_init()
     perror("malloc");
     exit(EXIT_FAILURE);
   }
+  return cons;
+}
+
+struct object_t *obj_init()
+{
+  struct object_t *obj = NULL;
+  if ((obj = malloc(sizeof(object_t *))) == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+  return obj;
 }
 
 /* Convert the array of tokens to a cons cell, start evaluating at index.
@@ -47,12 +54,12 @@ struct cons *tok_to_cons(char **tokens, char *types, int *index)
   while(types[*index] != RPAREN) {
     object_t *obj = malloc(sizeof(object_t *));
     switch(types[*index]) {
-      case NUMBER:
+      case INTEGER:
         i = malloc(sizeof(int *));
         *i = atoi(tokens[*index]);
         obj->val = (void *)i;
         break;
-      case NUMBER_FLT:
+      case FLOAT:
         f = malloc(sizeof(float *));
         *f = atof(tokens[*index]);
         obj->val = (void *)f;
@@ -103,10 +110,10 @@ void repr(object_t *obj)
   struct cons *cell = NULL;
   if (obj != NULL) {
   switch(obj->type) {
-    case NUMBER:
+    case INTEGER:
       printf("%d ", cast_int(obj->val));
       break;
-    case NUMBER_FLT:
+    case FLOAT:
       printf("%f ", cast_float(obj->val));
     case SYMBOL:
       printf("%s ", (char *)obj->val);

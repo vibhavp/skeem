@@ -16,30 +16,22 @@
  *WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <stdlib.h>
-#include "sym_table.h"
+#include "types.h"
+#ifndef TYPES_H
+#define TYPES_H
 
-static struct sym_table *global;
-static struct sym_table *global_head;
+char *builtins[] = {"quote", "lambda", "and", "or", "define",
+                      "not", "car", "cdr", "cons", "print", "eval",
+                      "if", "nil"};
 
-static void init_sym_table()
-{
-  global = malloc(sizeof(struct sym_table *));
-  global->next = NULL;
-  global_head = global;
-}
-
-void global_insert(const object_t *var, char *var_name)
-{
-  if (global_head == NULL) {
-    init_sym_table();
-  }
-  else {
-    global_head->next = malloc(sizeof(struct sym_table *));
-    global_head = global_head->next;
-  }
-  global_head->name = var_name;
-  global_head->var = var;
-  global_head->next = NULL;
-}
-
+object_t *quote(object_t *object);
+object_t *ifelse(object_t *cond, object *consequent, object_t *alternate);
+object_t *and(object_t *cond1, object *cond2);
+object_t *or(object_t *cond1, object *cond2);
+object_t *not(object_t *cond);
+object_t *car(object_t *cell);
+object_t *cdr(object_t *cell);
+object_t *print(object_t *obj);
+object_t *apply(object_t *function, struct cons *args);
+object_t *eval(object_t *obj);
+object_t *define(char *sym, object_t *val);

@@ -19,22 +19,17 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-enum num_types {
-  COMLEX,
-  DOUBLE,
-  INTEGER  
-};
-
 enum types {
-  NUMBER,
-  NUMBER_FLT,
+  INTEGER,
+  FLOAT,
   CHAR,
   STRING,
   SYMBOL,
   LIST,
-  PROCEDURE,
+  LAMBDA,
   LPAREN,
-  RPAREN
+  RPAREN,
+  QUOTED
 };
 
 struct numeric {
@@ -54,6 +49,11 @@ struct cons {
 
 #define car(x) ((struct cons *(x))->car)
 #define cdr(x) ((struct cons *(x))->cdr)
-extern struct cons *tok_to_cons();
+#define cast_int(x) (*((int *)(x)))
+#define cast_float(x) (*((float *)(x)))
+#define cast_cons(x) ((struct cons *)(x))
+#define cast_obj(x) (*(object_t *)(x))
+struct cons *tok_to_cons();
+object_t *obj_init();
 
 #endif

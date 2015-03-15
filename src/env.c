@@ -16,35 +16,53 @@
  *WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <stdio.h>
+#include "env.h"
+#include "types.h"
 #include <stdlib.h>
 #include <string.h>
-#include "types.h"
-#include "sym_table.h"
 
-#define unbound(x) (sym_table_find((x)) ? 1 : 0)
-
-static char *builtins[] = {"quote", "cond", "lambda", "and", "or", "define",
-                           "not", "car", "cdr", "cons", "print", "eval"};
-
-/* Call function using args as a list of arguments*/
-object_t *_apply(object_t *function, struct cons *args)
+struct env *env_init()
 {
-  
+  struct env *env = malloc(sizeof(struct env));
+  env->size = 0;
+  env->symbol = NULL;
+  e->value = NULL;
 }
 
-
-/* Evaluate a cons cell */
-object_t *_eval(struct cons *cell, s)
+void env_free(struct env *env)
 {
-  
-}
-
-object_t *define(char *sym, object_t *val)
-{
-  if(sym->type != SYMBOL) {
-    fprintf(stderr, "Expected SYMBOL, got %s.", type(sym->type));
-    return NULL;
+  int i;
+  for (i = 0; i <= env->size; i++) {
+    free(env->symbol[i]);
+    obj_free(env->value[i]);
   }
-  sym_tale_insert(val, );
+  free(env->symbol);
+  free(env->val);
+  free(env);
+}
+
+object_t *env_find(struct env *env, char *sym)
+{
+  int i;
+  for (i = 0; i  <= env->size; i++) {
+    if (strcmp(env->sym[i], sym) == 0)
+      return env->value[i];
+  }
+  return NULL;
+}
+
+void *env_insert(struct env *env, char *sym, object_t *val)
+{
+  int i;
+  for (i = 0; i <= env->size; i++) {
+    if (strcmp(env->symbol[i], sym) == 0 && memcmp(env->value[i], val) != 0) {
+      obj_free(env->val[i]);
+      env->val[i] = val;
+      return;
+    }
+  }
+  
+  env->symbol = sym;
+  env->value[env->size] = val;
+  env->size++;
 }

@@ -16,10 +16,17 @@
  *WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-struct sym_table {
-  char *name;
-  object_t *val;
-  struct sym_table *next;
+#ifndef ENV_H
+#define ENV_H
+#include "types.h"
+
+struct env {
+  int size;
+  char **symbol;
+  object_t **value;
 };
 
-void sym_table_insert();
+struct env *env_init();
+void env_free(struct env *env);
+
+#endif
