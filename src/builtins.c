@@ -62,8 +62,6 @@ object_t *add(object_t *n1, object_t *n2)
 
 object_t *subtract(object_t *n1, object_t *n2)
 {
-  check_number(n1);
-  check_number(n2);
   cast_int(n2->val) = -1 * cast_int(n2->val);
   object_t *result = add(n1, n2);
   cast_int(n2->val) = -1 * cast_int(n2->val);
