@@ -20,16 +20,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include "types.h"
-#include "sym_table.h"
+#include "env.h"
+#include "builtins.h"
 
 static inline void check_number(object_t *obj)
 {
   if (obj->type != INTEGER || obj->type != FLOAT) {
-    fprintf(stderr, "Expected int/float, got %s", strtype(obj->type));  
+    /* fprintf(stderr, "Expected int/float, got %s", strtype(obj->type));   */
   }
 }
 
-object_t add(object_t *n1, object_t *n2)
+object_t *add(object_t *n1, object_t *n2)
 {
   /* There has to be a better way to do this */
   check_number(n1);
@@ -38,36 +39,36 @@ object_t add(object_t *n1, object_t *n2)
 
   if (n1->type == INTEGER || n2->type == INTEGER) {
     result->val = malloc(sizeof(int *));
-    *(result->val) = cast_int(n1->val) + cast_int(n2->val);
+    cast_int(result->val) = cast_int(n1->val) + cast_int(n2->val);
     result->type = INTEGER;
   }
   else if (n1->type == INTEGER || n2->type == FLOAT) {
     result->val = malloc(sizeof(float *));
-    *(result->val) = cast_int(n1->val) + cast_float(n2->val);
+    cast_float(result->val) = cast_int(n1->val) + cast_float(n2->val);
     result->type = FLOAT;
   }
   else if (n1->type == FLOAT || n2->type == INTEGER) {
     result->val = malloc(sizeof(float *));
-    *(result->val) = cast_float(n1->val) + cast_int(n2->val);
+    cast_float(result->val) = cast_float(n1->val) + cast_int(n2->val);
     result->type = FLOAT;
   }
   else {
     result->val = malloc(sizeof(float *));
-    *(result->val) = cast_float(n1->val) + cast_float(n2->val);
+    cast_float(result->val) = cast_float(n1->val) + cast_float(n2->val);
     result->type = FLOAT;
   }
   return result;
 }
 
-object_t subtract(object *n1, object *n2)
+object_t *subtract(object_t *n1, object_t *n2)
 {
   check_number(n1);
   check_number(n2);
-  *(n2->val) = -1 * (*(n2->val));
+  cast_int(n2->val) = -1 * cast_int(n2->val);
   object_t *result = add(n1, n2);
-  *(n2->val) = -1 * (*(n2->val));
+  cast_int(n2->val) = -1 * cast_int(n2->val);
 
-  return result
+  return result;
 }
 
 object_t *quote(object_t *object) 
@@ -82,9 +83,10 @@ object_t *quote(object_t *object)
 /* If cond yield non-nil, return consequent, else alternate*/
 object_t *ifelse(object_t *cond, object_t *consequent, object_t *alternate)
 {
-  if (cond->type == SYMBOL && strcmp((char *)cond->val,"nil"))
+  if (cond->type == SYMBOL && strcmp(cond->val, "nil") == 0) {
     return eval(alternate);
-
+  }
+  
   return eval(consequent);
 }
 
@@ -115,33 +117,29 @@ object_t *apply(object_t *function, struct cons *args)
       return cdr;
     }
 
-    else if (strcmp(sym, "define"))
-      return define((char *)sym->val, eval(args->car));
+    /* else if (strcmp(sym, "define")) */
+    /*   return define() */
 
     else {
-      object_t *val = sym_table_find(val);
-      if (val == NULL)
+      object_t *l = sym_find(sym);
+      if (l == NULL)
         return NULL;
-      return apply(val, args);
+      return apply(l, args);
     }
   }
+  /* The car of function->val stores the argument list,
+   * while the cdr stores the function body.
+   */
+  if (check_args_n(function, args))
+    return NULL;
   
-  else {
-    /* The car of function->val stores the argument list,
-     * while the cdr stores the function body.
-     */
-    if (check_args_n(function, args))
-      return NULL;
-    
-    /*(lambda (a b c) (body))*/
-    struct cons *body = cast_cons(function->val)->cdr->cdr;
-
-    if (body->cdr == NULL)
-      /* Reached last statement*/
-      return eval(body->car);
-    
+  /*(lambda (a b c) (body))*/
+  struct cons *body = cast_cons(function->val)->cdr->cdr;
+  
+  if (body->cdr != NULL)
     (void)eval(body->car);
-  }
+  
+  return eval(body->car);
 }
 
 
@@ -154,35 +152,26 @@ object_t *eval(object_t *obj)
     case LIST:
       /* Doing a function call, the first car of the cell should either be a
        * procedure, or a symbol pointing to a procedure. */
-      if (cast_cons(obj->val)->car->type == PROCEDURE ||
+      if (cast_cons(obj->val)->car->type != PROCEDURE ||
           cast_cons(obj->val)->car->type != SYMBOL) {
         fprintf(stderr, "Invalid Function");
         /* Return to top level, haven't figured out how to do that yet.
          */
         return NULL;
       }
-      depth++;
-      return apply(cast_cons(obj->val)->car, cast_cons(obj->val)->cdr);
-
+      depth_inc();
+      
+      val = apply(cast_cons(obj->val)->car, cast_cons(obj->val)->cdr);
+      depth_dec();
+      return val;
+      
     case SYMBOL:
-      val = sym_table_find((char *)obj->val);
-      if (val == NULL) {
-        /* Return to top level, haven't figured out how to do that yet.
-         */
+      if ((val = sym_find((char *)obj->val)) == NULL) {
         return NULL;
       }
-      return val;
+      return eval(val);
 
     default:
       return obj;
   }
-}
-
-object_t *define(char *sym, object_t *val)
-{
-  if(sym->type != SYMBOL) {
-    fprintf(stderr, "Expected SYMBOL, got %s.", type(sym->type));
-    return NULL;
-  }
-  sym_tale_insert(val, );
 }

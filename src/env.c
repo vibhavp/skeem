@@ -18,18 +18,15 @@
 
 #include "env.h"
 #include "types.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
-struct env *env_init()
-{
-  struct env *env = malloc(sizeof(struct env));
-  env->size = 0;
-  env->symbol = NULL;
-  e->value = NULL;
-}
+static struct env **stack;
+static int stack_size;
 
-void env_free(struct env *env)
+static void env_free(struct env *env)
 {
   int i;
   for (i = 0; i <= env->size; i++) {
@@ -37,32 +34,90 @@ void env_free(struct env *env)
     obj_free(env->value[i]);
   }
   free(env->symbol);
-  free(env->val);
+  free(env->value);
   free(env);
 }
 
-object_t *env_find(struct env *env, char *sym)
+void global_init()
+{
+  stack = malloc(sizeof(struct env *));
+  stack_size = 0;
+}
+
+static object_t *env_find(struct env *env, char *sym)
 {
   int i;
-  for (i = 0; i  <= env->size; i++) {
-    if (strcmp(env->sym[i], sym) == 0)
+  for (i = 0; i <= env->size; i++) {
+    if (strcmp(sym, env->symbol[i]) == 0) {
+      if (env->value[i]->type == SYMBOL)
+        return env_find(env, (char *)env->value[i]->val);
       return env->value[i];
+    }
   }
   return NULL;
 }
 
-void *env_insert(struct env *env, char *sym, object_t *val)
+object_t *sym_find(char *sym)
+{
+  int i;
+  object_t *val;
+  for (i = stack_size; i <= 0; i--) {
+    if ((val = env_find(stack[i], sym)) != NULL)
+      return val;
+  }
+  return NULL;
+}
+
+
+void env_insert(struct env *env, char *sym, object_t *val)
 {
   int i;
   for (i = 0; i <= env->size; i++) {
-    if (strcmp(env->symbol[i], sym) == 0 && memcmp(env->value[i], val) != 0) {
-      obj_free(env->val[i]);
-      env->val[i] = val;
+    if (strcmp(env->symbol[i], sym) == 0 && memcmp(env->value[i], val,
+                                                   fmax(sizeof(env->value[i]),
+                                                        sizeof(val))) != 0) {
+      obj_free(env->value[i]);
+      env->value[i] = val;
       return;
     }
   }
   
-  env->symbol = sym;
+  env->symbol[env->size] = sym;
   env->value[env->size] = val;
   env->size++;
 }
+
+inline void sym_insert(char *sym, object_t *val)
+{
+  env_insert(stack[stack_size], sym, val);
+}
+
+void sym_insert_as_arg(char *sym, object_t *val)
+{
+  
+}
+
+void depth_inc()
+{
+  struct env **new_env;
+  new_env = realloc(stack, sizeof(stack) * stack_size + sizeof(struct enc *));
+  if (new_env == NULL) {
+    perror("realloc");
+    exit(EXIT_FAILURE);
+  }
+  stack = new_env;
+  stack_size++;
+  stack[stack_size]->size = 0;
+  stack[stack_size]->symbol = malloc(sizeof(char *));
+  stack[stack_size]->value = malloc(sizeof(object_t *));
+}
+
+void depth_dec()
+{
+  env_free(stack[stack_size]);
+  stack_size--;
+}
+
+/* Local Variables: */
+/* flycheck-gcc-include-path: ("../include/") */
+/* End: */

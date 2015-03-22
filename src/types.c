@@ -29,12 +29,20 @@ struct cons *cons_init()
     perror("malloc");
     exit(EXIT_FAILURE);
   }
-  return cons;
+  return cell;
 }
 
-struct object_t *obj_init()
+void cons_free(struct cons *cell)
 {
-  struct object_t *obj = NULL;
+  obj_free(cell->car);
+
+  if (cell->cdr != NULL)
+    cons_free(cell->cdr);
+}
+
+object_t *obj_init()
+{
+  object_t *obj = NULL;
   if ((obj = malloc(sizeof(object_t *))) == NULL) {
     perror("malloc");
     exit(EXIT_FAILURE);
@@ -42,12 +50,23 @@ struct object_t *obj_init()
   return obj;
 }
 
+void obj_free(object_t *obj)
+{
+  if (obj->type == LIST) {
+    cons_free(obj->val);
+    free (obj);
+    return;
+  }
+  free(obj->val);
+  free(obj);
+}
+
 /* Convert the array of tokens to a cons cell, start evaluating at index.
  * index is updated to the index of the token at the end of the sexp.
  */
 struct cons *tok_to_cons(char **tokens, char *types, int *index)
 {
-  struct cons *cell = cons_init(), *head = cell, *nest = NULL;
+  struct cons *cell = cons_init(), *head = cell;
   int *i;
   float *f;
 
@@ -132,3 +151,7 @@ void repr(object_t *obj)
   }
   }
 }
+
+/* Local Variables: */
+/* flycheck-gcc-include-path: ("../include/") */
+/* End: */
