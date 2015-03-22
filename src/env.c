@@ -41,6 +41,10 @@ static void env_free(struct env *env)
 void global_init()
 {
   stack = malloc(sizeof(struct env *));
+  if (stack == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
   stack_size = 0;
 }
 
