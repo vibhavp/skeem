@@ -16,44 +16,24 @@
  *WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef TYPES_H
-#define TYPES_H
+#include "types.h"
+#ifndef BUILTINS_H
+#define BUILTINS_H
 
-enum types {
-  INTEGER,
-  FLOAT,
-  CHAR,
-  STRING,
-  SYMBOL,
-  LIST,
-  LAMBDA,
-  LPAREN,
-  RPAREN,
-  QUOTED
-};
+char *builtins[] = {"quote", "lambda", "and", "or", "define",
+                      "not", "car", "cdr", "cons", "print", "eval",
+                      "if", "nil"};
 
-struct numeric {
-  char type;
-  void *num;
-};
-
-typedef struct _object_t {
-  char type;
-  void *val;
-} object_t;
-
-struct cons {
-  object_t *car;
-  struct cons *cdr;
-};
-
-#define car(x) ((struct cons *(x))->car)
-#define cdr(x) ((struct cons *(x))->cdr)
-#define cast_int(x) (*((int *)(x)))
-#define cast_float(x) (*((float *)(x)))
-#define cast_cons(x) ((struct cons *)(x))
-#define cast_obj(x) (*(object_t *)(x))
-struct cons *tok_to_cons();
-object_t *obj_init();
+object_t *quote(object_t *object);
+object_t *ifelse(object_t *cond, object_t *consequent, object_t *alternate);
+object_t *and(object_t *cond1, object_t *cond2);
+object_t *or(object_t *cond1, object_t *cond2);
+object_t *not(object_t *cond);
+object_t *car(object_t *cell);
+object_t *cdr(object_t *cell);
+object_t *print(object_t *obj);
+object_t *apply(object_t *function, struct cons *args);
+object_t *eval(object_t *obj);
+object_t *define(char *sym, object_t *val);
 
 #endif

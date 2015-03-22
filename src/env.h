@@ -26,7 +26,8 @@ struct env {
   object_t **value;
 };
 
-struct env *env_init();
-void env_free(struct env *env);
-
+object_t *sym_find(char *sym);
+inline void sym_insert(char *sym, object_t *val);
+void depth_inc();
+void depth_dec();
 #endif
