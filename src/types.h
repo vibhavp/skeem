@@ -18,27 +18,63 @@
 
 #ifndef TYPES_H
 #define TYPES_H
+#include <stdint.h>
+#include <stdbool.h>
 
-enum types {
+/*Object types.*/
+typedef enum types {
   INTEGER,
   FLOAT,
   CHAR,
   STRING,
   SYMBOL,
   LIST,
-  LPAREN,
-  RPAREN,
-  QUOTED
-};
+  BOOLEAN,
+  BUILTIN
+} type_t;
 
-struct numeric {
-  char type;
-  void *num;
-};
+#define LPAREN BUILTIN+1
+#define RPAREN BUILTIN+2
+
+typedef enum builtins {
+  AND,
+  CAR,
+  CDR,
+  CONS,
+  DEFINE,
+  IF,
+  LAMBDA,
+  NOT,
+  OR,
+  PRINT,
+  QUOTE,
+  OPERATOR,
+} builtin_t;
+
+typedef enum operators {
+  ADD,
+  SUBTRACT,
+  DIVIDE,
+  MULTIPLY
+} operator_t;
 
 typedef struct _object_t {
-  enum types type;
-  void *val;
+  type_t type;
+  bool quoted;
+  union {
+    /*A hackish numeric tower*/
+    union {
+      int64_t integer;
+      double flt;
+    };
+    char *string;
+    struct cons *cell;
+    union {
+      builtin_t builtin;
+      operator_t operator;
+    };
+    bool boolean;
+  };
 } object_t;
 
 struct cons {
@@ -46,13 +82,10 @@ struct cons {
   struct cons *cdr;
 };
 
-#define cast_int(x) (*((int *)(x)))
-#define cast_float(x) (*((float *)(x)))
-#define cast_cons(x) ((struct cons *)(x))
-#define cast_obj(x) (*(object_t *)(x))
 struct cons *tok_to_cons();
 void cons_free(struct cons *cell);
 object_t *obj_init();
 void obj_free(object_t *obj);
+struct cons *dup_cell(struct cons *cell);
 
 #endif

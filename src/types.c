@@ -52,39 +52,38 @@ object_t *obj_init()
 
 void obj_free(object_t *obj)
 {
-  if (obj->type == LIST) {
-    cons_free(obj->val);
-    free (obj);
-    return;
+  switch(obj->type) {
+    case LIST:
+      cons_free(obj->cell);
+      break;
+
+    case SYMBOL:
+    case STRING:
+      free(obj->string);
+    default:
+      break;
   }
-  free(obj->val);
   free(obj);
 }
-
+         
 /* Convert the array of tokens to a cons cell, start evaluating at index.
  * index is updated to the index of the token at the end of the sexp.
  */
 struct cons *tok_to_cons(char **tokens, char *types, int *index)
 {
   struct cons *cell = cons_init(), *head = cell;
-  int *i;
-  float *f;
 
   while(types[*index] != RPAREN) {
-    object_t *obj = malloc(sizeof(object_t *));
+    object_t *obj = obj_init();
     switch(types[*index]) {
       case INTEGER:
-        i = malloc(sizeof(int *));
-        *i = atoi(tokens[*index]);
-        obj->val = (void *)i;
+        obj->integer = atoi(tokens[*index]);
         break;
       case FLOAT:
-        f = malloc(sizeof(float *));
-        *f = atof(tokens[*index]);
-        obj->val = (void *)f;
+        obj->flt = atof(tokens[*index]);
         break;
       case SYMBOL:
-        obj->val = strdup(tokens[*index]);
+        obj->string = strdup(tokens[*index]);
         break;
       case LPAREN:
         /* Entering a nested list */
@@ -93,10 +92,10 @@ struct cons *tok_to_cons(char **tokens, char *types, int *index)
          */
         obj->type = LIST;
         *index += 1;
-        obj->val = tok_to_cons(tokens, types, index);
+        obj->cell = tok_to_cons(tokens, types, index);
         break;
       case STRING:
-        obj->val = strdup(tokens[*index]);
+        obj->string = strdup(tokens[*index]);
         break;
     }
     obj->type = types[*index];
@@ -119,39 +118,6 @@ object_t *cons_to_object(struct cons *cell)
 {
   object_t *obj = malloc(sizeof(object_t *));
   obj->type = LIST;
-  obj->val = cell;
+  obj->cell = cell;
   return obj;
 }
-
-/* Print a string repr */
-void repr(object_t *obj)
-{
-  struct cons *cell = NULL;
-  if (obj != NULL) {
-  switch(obj->type) {
-    case INTEGER:
-      printf("%d ", cast_int(obj->val));
-      break;
-    case FLOAT:
-      printf("%f ", cast_float(obj->val));
-    case SYMBOL:
-      printf("%s ", (char *)obj->val);
-      break;
-    case LIST:
-      cell = cast_cons(obj->val);
-      printf("( ");
-      while (cell != NULL) {
-        repr(cell->car);
-        cell = cell->cdr;
-      }
-      printf(") ");
-      break;
-    case STRING:
-      printf("%s ", (char *)obj->val);
-  }
-  }
-}
-
-/* Local Variables: */
-/* flycheck-gcc-include-path: ("../include/") */
-/* End: */
