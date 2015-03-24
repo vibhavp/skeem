@@ -54,7 +54,7 @@ static object_t *env_find(struct env *env, char *sym)
   for (i = 0; i <= env->size; i++) {
     if (strcmp(sym, env->symbol[i]) == 0) {
       if (env->value[i]->type == SYMBOL)
-        return env_find(env, (char *)env->value[i]->val);
+        return env_find(env, env->value[i]->string);
       return env->value[i];
     }
   }
@@ -94,11 +94,6 @@ void env_insert(struct env *env, char *sym, object_t *val)
 inline void sym_insert(char *sym, object_t *val)
 {
   env_insert(stack[stack_size], sym, val);
-}
-
-void sym_insert_as_arg(char *sym, object_t *val)
-{
-  
 }
 
 void depth_inc()
