@@ -20,20 +20,22 @@
 #ifndef BUILTINS_H
 #define BUILTINS_H
 
-char *builtins[] = {"quote", "lambda", "and", "or", "define",
-                      "not", "car", "cdr", "cons", "print", "eval",
-                      "if", "nil"};
-
 object_t *quote(object_t *object);
 object_t *ifelse(object_t *cond, object_t *consequent, object_t *alternate);
 object_t *and(object_t *cond1, object_t *cond2);
 object_t *or(object_t *cond1, object_t *cond2);
 object_t *not(object_t *cond);
-object_t *car(object_t *cell);
-object_t *cdr(object_t *cell);
+object_t *quote(object_t *obj);
 object_t *print(object_t *obj);
 object_t *apply(object_t *function, struct cons *args);
 object_t *eval(object_t *obj);
-object_t *define(char *sym, object_t *val);
+object_t *define(object_t *sym, object_t *val);
+object_t *dup_obj(object_t *obj);
+object_t *divide(object_t *n1, object_t *n2);
+object_t *multiply(object_t *n1, object_t *n2);
+object_t *cons(object_t *car, object_t *cdr);
+char *repr(object_t *obj);
+
+object_t *builtins[12];
 
 #endif

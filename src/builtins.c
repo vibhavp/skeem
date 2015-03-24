@@ -38,23 +38,19 @@ object_t *add(object_t *n1, object_t *n2)
   object_t *result = obj_init();
 
   if (n1->type == INTEGER || n2->type == INTEGER) {
-    result->val = malloc(sizeof(int *));
-    cast_int(result->val) = cast_int(n1->val) + cast_int(n2->val);
+    result->integer = n1->integer + n2->flt;
     result->type = INTEGER;
   }
   else if (n1->type == INTEGER || n2->type == FLOAT) {
-    result->val = malloc(sizeof(float *));
-    cast_float(result->val) = cast_int(n1->val) + cast_float(n2->val);
+    result->flt = n1->integer + n2->flt;
     result->type = FLOAT;
   }
   else if (n1->type == FLOAT || n2->type == INTEGER) {
-    result->val = malloc(sizeof(float *));
-    cast_float(result->val) = cast_float(n1->val) + cast_int(n2->val);
+    result->flt = n1->flt + n2->integer;
     result->type = FLOAT;
   }
   else {
-    result->val = malloc(sizeof(float *));
-    cast_float(result->val) = cast_float(n1->val) + cast_float(n2->val);
+    result->flt = n1->flt + n2->flt;
     result->type = FLOAT;
   }
   return result;
@@ -62,26 +58,25 @@ object_t *add(object_t *n1, object_t *n2)
 
 object_t *subtract(object_t *n1, object_t *n2)
 {
-  cast_int(n2->val) = -1 * cast_int(n2->val);
+  if (n2->type == FLOAT)
+    n2->flt = -n2->flt;
+  else if (n2->type == INTEGER)
+    n2->integer = -n2->integer;
+  
   object_t *result = add(n1, n2);
-  cast_int(n2->val) = -1 * cast_int(n2->val);
 
+  if (n2->type == FLOAT)
+    n2->flt = -n2->flt;
+  else if (n2->type == INTEGER)
+    n2->integer = -n2->integer;
+  
   return result;
-}
-
-object_t *quote(object_t *object) 
-{
-  object_t *quoted = obj_init();
-  quoted->type = QUOTED;
-  quoted->val = object;
-
-  return quoted;
 }
 
 /* If cond yield non-nil, return consequent, else alternate*/
 object_t *ifelse(object_t *cond, object_t *consequent, object_t *alternate)
 {
-  if (cond->type == SYMBOL && strcmp(cond->val, "nil") == 0) {
+  if (cond->type == BOOLEAN && !cond->boolean) {
     return eval(alternate);
   }
   
@@ -89,87 +84,155 @@ object_t *ifelse(object_t *cond, object_t *consequent, object_t *alternate)
 }
 
     
-/* Call function using args as a list of arguments*/
-object_t *apply(object_t *function, struct cons *args)
+/* Call function using args as a list of arguments.
+ * A function call in Scheme/Lisp is a list with the car
+ * being the lambda/function symbol (an object_t type with cell/string set), and
+ * the cdr being the arguments. The cdr is seperated into a different list, and
+ * than passed to apply:
+ * ((lambda (a b c) (+ 1 2 3)) 1 2 3)
+ *  |_______________________|  |___|
+ *             car              cdr
+ *
+ * Which is internally represented as:
+ * ((lambda.((a . (b . (c . NULL)). ((ADD . (a . (b . (c . NULL)))) . NULL)))).(1 . (2 . (3 . NULL))))
+ *  |         |____________________||_____________________________________| |  |                    |
+ *  |              parameters                       body                    |  |                    |
+ *  |_______________________________________________________________________|  |____________________|
+ *                               function                                               args
+ */
+ object_t *apply(object_t *function, struct cons *args)
 {
-  if (function->type == SYMBOL) {
-    /* Check for builtins */
-    char *sym = (char *)function->val;
-    if (strcmp(sym, "+"))
-      return add(eval(args->car), eval(args->cdr->car));
-    
-    else if (strcmp(sym, "-"))
-      return subtract(eval(args->car), eval(args->cdr->car));
-    
-    else if (strcmp(sym, "if"))
-      /* Cannot eval consequents, might have side effects */
-      return ifelse(eval(args->car), args->car, args->cdr->car);
+  object_t *obj;
+  if (function->type == BUILTIN) {
+    switch (function->builtin) {
+      case AND:
+        return and(eval(args->car), eval(args->cdr->car));
+      case CAR:
+        return eval(args->car);
+      case CDR:
+        obj = obj_init();
+        obj->type = LIST;
+        obj->cell = args->cdr;
+        return obj;
+      case CONS:
+        return cons(args->car, args->cdr->car);
+      case DEFINE:
+        return define(args->car, args->cdr->car);
+      case IF:
+        return ifelse(eval(args->car),
+                      args->cdr->car,
+                      args->cdr->cdr->car);
+      case LAMBDA:
+        /*TODO*/
+        return args;
+      case NOT:
+        return not(eval(args->car));
+      case OR:
+        return or(eval(args->car), eval(args->cdr->car));
+      case PRINT:
+        return print(eval(args->car));
+      case QUOTE:
+        return quote(args->car);
+      case OPERATOR:
 
-    else if (strcmp(sym, "car"))
-      return args->car;
-
-    else if (strcmp(sym, "cdr")) {
-      object_t *cdr = obj_init();
-      cdr->type = LIST;
-      cdr->val = args->cdr;
-      return cdr;
-    }
-
-    /* else if (strcmp(sym, "define")) */
-    /*   return define() */
-
-    else {
-      object_t *l = sym_find(sym);
-      if (l == NULL)
-        return NULL;
-      return apply(l, args);
+        switch (function->operator) {
+          case ADD:
+            return add(eval(args->car), eval(args->cdr->car));
+          case SUBTRACT:
+            return subtract(eval(args->car), eval(args->cdr->car));
+          case DIVIDE:
+            return divide(eval(args->car), eval(args->cdr->car));
+          case MULTIPLY:
+            return multiply(eval(args->car), eval(args->car));
+        }
     }
   }
-  /* The car of function->val stores the argument list,
-   * while the cdr stores the function body.
-   */
-  if (check_args_n(function, args))
-    return NULL;
-  
-  /*(lambda (a b c) (body))*/
-  struct cons *body = cast_cons(function->val)->cdr->cdr;
-  
-  if (body->cdr != NULL)
-    (void)eval(body->car);
-  
-  return eval(body->car);
-}
+  if (function->type == SYMBOL) {
+    function = sym_find(function->string);
+    if (function == NULL) {
+      return NULL;
+    }
+  }
+  if (function->type == LIST && function->cell->car->builtin == LAMBDA) {
 
+    /*Parameters in the function's "signature"*/
+    struct cons *parameters = function->cell->cdr->car->cell;
+    /*Actual parameters passed to the function*/
+    struct cons *args_head = args;
+    /*The function's body */
+    struct cons *body = function->cell->cdr->cdr;
+    
+    if (_length(parameters) != _length(args)) {
+      fprintf(stderr, "%s: wrong number of arguments.", repr(function));
+      return NULL;
+    }
+    
+    depth_inc();
+    while (parameters != NULL) {
+      sym_insert(parameters->car->string, args_head->car);
+      args_head = args_head->cdr;
+      parameters = parameters->cdr;
+    }
+    if (body->cdr != NULL)
+      (void)eval(body->car);
+
+    /*TODO: Check this thing, looks buggy*/
+    /*Reached end of body, return this value*/
+    return eval(body->cdr->car);
+    depth_dec();
+  }
+  
+  fprintf(stderr, "Invalid Function: %s.", repr(function));
+  return NULL;
+}
 
 /* Evaluate object */
 object_t *eval(object_t *obj)
 {
   object_t *val;
   
-  switch (obj->type) {
-    case LIST:
-      /* Doing a function call, the first car of the cell should either be a
-       * procedure, or a symbol pointing to a procedure. */
-      if (cast_cons(obj->val)->car->type != PROCEDURE ||
-          cast_cons(obj->val)->car->type != SYMBOL) {
-        fprintf(stderr, "Invalid Function");
-        /* Return to top level, haven't figured out how to do that yet.
-         */
-        return NULL;
-      }
-      depth_inc();
-      
-      val = apply(cast_cons(obj->val)->car, cast_cons(obj->val)->cdr);
-      depth_dec();
-      return val;
-      
-    case SYMBOL:
+  if (!obj->quoted) {
+    switch (obj->type)
+    {
+      case LIST:
+        /* Doing a function call, the first car of the cell should either be a
+         * procedure, or a symbol pointing to a procedure. */
+        if (obj->cell->car->type != PROCEDURE ||
+            obj->cell->car->type != SYMBOL) {
+          fprintf(stderr, "Invalid Function");
+          /* Return to top level, haven't figured out how to do that yet.
+           */
+          return NULL;
+        }
+        depth_inc();
+        val = 
+            depth_dec();
+        return val;
+        
+      case SYMBOL:
       if ((val = sym_find((char *)obj->val)) == NULL) {
         return NULL;
       }
       return eval(val);
+      
+      default:
+        return obj;
+    }
+  }
+  /*Quoted object*/
+  return obj;
+}
 
-    default:
-      return obj;
+void init_globals()
+{
+  char *builtin_func[] = {"and", "car", "cdr", "cons", "define", "eval",
+                          "if", "lambda", "not", "or", "print", "quote"};
+  object_t *obj;
+  builtin_t i;
+  for (i = AND; i <= QUOTE; i++) {
+    obj  = obj_init();
+    obj->type = BUILTIN;
+    obj->builtin = i;
+    sym_insert(builtin_func[i], obj);
   }
 }
