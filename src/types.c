@@ -18,6 +18,7 @@
 
 #include "types.h"
 #include "grammar.h"
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -66,6 +67,50 @@ void obj_free(object_t *obj)
   free(obj);
 }
          
+static char *strtype(type_t type)
+{
+  switch(type)
+  {
+    case INTEGER:
+      return "integer";
+    case FLOAT:
+      return "float";
+    case CHAR:
+      return "char";
+    case STRING:
+      return "string";
+    case SYMBOL:
+      return "symbol";
+    case LIST:
+      return "list";
+    case BOOLEAN:
+      return "boolean";
+    case BUILTIN:
+      return "procedure";
+  }
+}
+
+int check_arg_type(object_t *obj, int n, ...)
+{
+  va_list args;
+  type_t type;
+  int i;
+  
+  va_start(args, n);
+  for (i = 0; i < n; i++) {
+    type = va_arg(args, type_t);
+    if (obj->type != type) {
+      fprintf(stderr, "Wrong argument type - %s (wanted %s).",
+              strtype(obj->type),
+              strtype(type));
+      va_end(args);
+      return 1;
+    }
+  }
+  va_end(args);
+  return 0;
+}
+
 /* Convert the array of tokens to a cons cell, start evaluating at index.
  * index is updated to the index of the token at the end of the sexp.
  */

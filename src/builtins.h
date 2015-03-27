@@ -36,6 +36,8 @@ object_t *multiply(object_t *n1, object_t *n2);
 object_t *cons(object_t *car, object_t *cdr);
 char *repr(object_t *obj);
 
-object_t *builtins[12];
+extern object_t *builtins[12];
+extern object_t *CONST_TRUE;
+extern object_t *CONST_FALSE;
 
 #endif

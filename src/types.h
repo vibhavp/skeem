@@ -36,7 +36,7 @@ typedef enum types {
 #define LPAREN BUILTIN+1
 #define RPAREN BUILTIN+2
 
-typedef enum builtins {
+typedef enum {
   AND,
   CAR,
   CDR,
@@ -49,14 +49,27 @@ typedef enum builtins {
   PRINT,
   QUOTE,
   OPERATOR,
+  PREDICATE
 } builtin_t;
 
-typedef enum operators {
+typedef enum {
   ADD,
   SUBTRACT,
   DIVIDE,
   MULTIPLY
 } operator_t;
+
+typedef enum {
+  INTEGER_P,
+  FLOAT_P,
+  NUMBER_P,
+  STRING_P,
+  SYMBOL_P,
+  LIST_P,
+  LAMBDA_P
+} predicate_t;
+
+struct cons;
 
 typedef struct _object_t {
   type_t type;
@@ -72,6 +85,7 @@ typedef struct _object_t {
     union {
       builtin_t builtin;
       operator_t operator;
+      predicate_t predicate;
     };
     bool boolean;
   };
@@ -86,6 +100,8 @@ struct cons *tok_to_cons();
 void cons_free(struct cons *cell);
 object_t *obj_init();
 void obj_free(object_t *obj);
+object_t *obj_dup(object_t *obj);
 struct cons *dup_cell(struct cons *cell);
+int check_arg_type(object_t *obj, int n, ...);
 
 #endif
