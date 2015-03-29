@@ -30,7 +30,9 @@ typedef enum types {
   SYMBOL,
   LIST,
   BOOLEAN,
-  BUILTIN
+  BUILTIN,
+  OPERATOR,
+  PREDICATE
 } type_t;
 
 #define LPAREN BUILTIN+1
@@ -40,16 +42,14 @@ typedef enum {
   AND,
   CAR,
   CDR,
+  COND,
   CONS,
   DEFINE,
-  IF,
   LAMBDA,
   NOT,
   OR,
   PRINT,
-  QUOTE,
-  OPERATOR,
-  PREDICATE
+  QUOTE
 } builtin_t;
 
 typedef enum {
@@ -91,17 +91,19 @@ typedef struct _object_t {
   };
 } object_t;
 
-struct cons {
+typedef struct cons {
   object_t *car;
   struct cons *cdr;
-};
+} cons_t;
 
-struct cons *tok_to_cons();
-void cons_free(struct cons *cell);
+cons_t *tok_to_cons();
+void cons_free(cons_t *cell);
 object_t *obj_init();
 void obj_free(object_t *obj);
 object_t *obj_dup(object_t *obj);
-struct cons *dup_cell(struct cons *cell);
+cons_t *dup_cell(cons_t *cell);
 int check_arg_type(object_t *obj, int n, ...);
+char *strpred(predicate_t pred);
+char *strop(operator_t op);
 
 #endif

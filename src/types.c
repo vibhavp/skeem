@@ -23,17 +23,17 @@
 #include <string.h>
 #include <stdio.h>
 
-struct cons *cons_init()
+cons_t *cons_init()
 {
-  struct cons *cell = NULL;
-  if ((cell = malloc(sizeof(struct cons *))) == NULL) {
+  cons_t *cell = NULL;
+  if ((cell = malloc(sizeof(cons_t *))) == NULL) {
     perror("malloc");
     exit(EXIT_FAILURE);
   }
   return cell;
 }
 
-void cons_free(struct cons *cell)
+void cons_free(cons_t *cell)
 {
   obj_free(cell->car);
 
@@ -85,7 +85,7 @@ static char *strtype(type_t type)
       return "list";
     case BOOLEAN:
       return "boolean";
-    case BUILTIN:
+    default: /*builtin*/
       return "procedure";
   }
 }
@@ -111,12 +111,48 @@ int check_arg_type(object_t *obj, int n, ...)
   return 0;
 }
 
+char *strop(operator_t op)
+{
+  switch(op)
+  {
+    case ADD:
+      return "+";
+    case SUBTRACT:
+      return "-";
+    case DIVIDE:
+      return "/";
+    default: /*Multiply*/
+      return "*";
+  }
+}
+
+char *strpred(predicate_t pred)
+{
+  switch(pred)
+  {
+    case INTEGER_P:
+      return "integer?";
+    case FLOAT_P:
+      return "float?";
+    case NUMBER_P:
+      return "number?";
+    case STRING_P:
+      return "string?";
+    case SYMBOL_P:
+      return "symbol?";
+    case LIST_P:
+      return "list?";
+    default: /*LAMBDA_P*/
+      return "lambda?";
+  }
+}
+
 /* Convert the array of tokens to a cons cell, start evaluating at index.
  * index is updated to the index of the token at the end of the sexp.
  */
-struct cons *tok_to_cons(char **tokens, char *types, int *index)
+cons_t *tok_to_cons(char **tokens, char *types, int *index)
 {
-  struct cons *cell = cons_init(), *head = cell;
+  cons_t *cell = cons_init(), *head = cell;
 
   while(types[*index] != RPAREN) {
     object_t *obj = obj_init();
@@ -159,7 +195,7 @@ struct cons *tok_to_cons(char **tokens, char *types, int *index)
 }
 
 /* Convert a cons cell to an object */
-object_t *cons_to_object(struct cons *cell)
+object_t *cons_to_object(cons_t *cell)
 {
   object_t *obj = malloc(sizeof(object_t *));
   obj->type = LIST;

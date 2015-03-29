@@ -23,6 +23,12 @@
 #include <string.h>
 #include <math.h>
 
+struct env {
+  int size;
+  char **symbol;
+  object_t **value;
+};
+
 static struct env **stack;
 static int stack_size;
 
@@ -117,6 +123,9 @@ void depth_dec()
   stack_size--;
 }
 
-/* Local Variables: */
-/* flycheck-gcc-include-path: ("../include/") */
-/* End: */
+/*Return to top level.*/
+inline void goto_top()
+{
+  while (stack_size != 0)
+    depth_dec();
+}

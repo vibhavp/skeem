@@ -20,14 +20,10 @@
 #define ENV_H
 #include "types.h"
 
-struct env {
-  int size;
-  char **symbol;
-  object_t **value;
-};
-
 object_t *sym_find(char *sym);
-inline void sym_insert(char *sym, object_t *val);
+void sym_insert(char *sym, object_t *val);
 void depth_inc();
 void depth_dec();
+void goto_top();
+
 #endif

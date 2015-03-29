@@ -21,13 +21,13 @@
 #define BUILTINS_H
 
 object_t *quote(object_t *object);
-object_t *ifelse(object_t *cond, object_t *consequent, object_t *alternate);
+object_t *cond(struct cons *clauses);
 object_t *and(object_t *cond1, object_t *cond2);
 object_t *or(object_t *cond1, object_t *cond2);
 object_t *not(object_t *cond);
 object_t *quote(object_t *obj);
 object_t *print(object_t *obj);
-object_t *apply(object_t *function, struct cons *args);
+object_t *apply(object_t *function, cons_t *args);
 object_t *eval(object_t *obj);
 object_t *define(object_t *sym, object_t *val);
 object_t *dup_obj(object_t *obj);
