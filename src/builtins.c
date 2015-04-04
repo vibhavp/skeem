@@ -19,8 +19,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include "types.h"
+#include "mem.h"
 #include "env.h"
 #include "builtins.h"
 
@@ -37,6 +37,9 @@
 
 object_t *add(object_t *n1, object_t *n2)
 {
+  if (n1 == NULL || n2 == NULL)
+    return NULL;
+ 
   if (check_arg_type(n1, 2, INTEGER, FLOAT) &&
       check_arg_type(n2, 2, INTEGER, FLOAT))
     return NULL;
@@ -64,6 +67,9 @@ object_t *add(object_t *n1, object_t *n2)
 
 object_t *subtract(object_t *n1, object_t *n2)
 {
+  if (n1 == NULL || n2 == NULL)
+      return NULL;
+    
   if (n2->type == FLOAT)
     n2->flt = -n2->flt;
   else if (n2->type == INTEGER)
@@ -88,6 +94,9 @@ object_t *subtract(object_t *n1, object_t *n2)
  */
 object_t *cond(cons_t *clauses)
 {
+  if (clauses == NULL)
+    return NULL;
+  
   cons_t *curr_cell = clauses, *clause;
   object_t *val;
   int clause_no = 1;
@@ -112,6 +121,9 @@ object_t *cond(cons_t *clauses)
 
 object_t *cdr(object_t *cell)
 {
+  if (cell == NULL)
+    return NULL;
+  
   object_t *obj = obj_init();
    obj->cell = cell->cell->cdr;
   return obj;
@@ -119,11 +131,16 @@ object_t *cdr(object_t *cell)
 
 inline object_t *car(cons_t *cell)
 {
+  if (cell == NULL)
+    return NULL;
   return cell->car;
 }
 
 static object_t *call_predicate(object_t *obj, predicate_t pred)
 {
+  if (obj == NULL)
+    return NULL;
+  
   switch(pred)
   {
     case INTEGER_P:
@@ -143,9 +160,12 @@ static object_t *call_predicate(object_t *obj, predicate_t pred)
   }
 }
 
-static object_t *call_operator(object_t *op, cons_t *args)
+static object_t *call_operator(operator_t op, cons_t *args)
 {
-  switch (op->operator) {
+  if (args == NULL)
+    return NULL;
+  
+  switch (op) {
     case ADD:
       return add(eval(args->car), eval(args->cdr->car));
     case SUBTRACT:
@@ -157,25 +177,13 @@ static object_t *call_operator(object_t *op, cons_t *args)
   }
 }
 
-static int _length(cons_t *list)
-{
-  int len = 0;
-  cons_t *head = list;
-
-  while (head != 0)
-  {
-    len++;
-    head = head->cdr;
-  }
-  return len;
-}
 
 /*true if the length of args == params_no. Else, print an error message and
  * return false*/
 static bool correct_number_args(char *function, int params_no,
                                 cons_t *args)
 {
-  int len = _length(args);
+  int len = length(args);
   if (len != params_no) {
     fprintf(stderr,
             "Wrong number of arguments to %s - %d. (Wanted %d)",
@@ -214,7 +222,7 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
           cond(args) : NULL;
     case LAMBDA:
       /*TODO*/
-      return make_procedure(args);
+      return make_procedure(args->car->cell, args->cdr->car->cell);
     case NOT:
       return correct_number_args("not", 1, args) ?
           not(eval(args->car)) : NULL;
@@ -224,17 +232,18 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
     case PRINT:
       return correct_number_args("print", 1, args) ?
           print(eval(args->car)) : NULL;
-    case QUOTE:
+    default: /*QUOTE*/
       return correct_number_args("quote", 1, args) ?
           quote(args->car) : NULL;
   }
 }
+
 /* Call function using args as a list of arguments.
  * A function call in Scheme/Lisp is a list with the car
  * being the lambda/function symbol (an object_t type with cell/string set), and
  * the cdr being the arguments. The cdr is seperated into a different list, and
  * than passed to apply:
- * ((lambda (a b c) (+ 1 2 3)) 1 2 3)
+ * ((lambda (a b c) (+ a b c)) 1 2 3)
  *  |_______________________|  |___|
  *             car              cdr
  *
@@ -258,12 +267,13 @@ object_t *apply(object_t *function, cons_t *args)
           call_predicate(args->car, function->predicate) : NULL;
     case OPERATOR:
       return correct_number_args(strop(function->operator), 2, args) ?
-          call_operator(function, args) : NULL;
+          call_operator(function->operator, args) : NULL;
     case SYMBOL:
       function = sym_find(function->string);
       if (function == NULL) {
         return NULL;
       }
+      return apply(function, args);
     case LIST:
       if (function->cell->car->builtin == LAMBDA) {
         /*Parameters in the lambda's "signature"*/
@@ -273,11 +283,9 @@ object_t *apply(object_t *function, cons_t *args)
         /*The lambda's body */
         cons_t *body = function->cell->cdr->cdr->car->cell;
     
-        if (_length(parameters) != _length(args)) {
-          fprintf(stderr, "%s: wrong number of arguments.", repr(function));
+        if (!correct_number_args(repr(function), length(parameters), args))
           return NULL;
-        }
-
+        
         while (parameters != NULL) {
           sym_insert(parameters->car->string, args_head->car);
           args_head = args_head->cdr;
@@ -292,7 +300,7 @@ object_t *apply(object_t *function, cons_t *args)
         depth_dec();
         return eval(body->car);
       }
-    default:      
+    default:
       fprintf(stderr, "Invalid Function: %s.", repr(function));
       return NULL;
   }

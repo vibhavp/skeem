@@ -18,54 +18,13 @@
 
 #include "types.h"
 #include "grammar.h"
+#include "env.h"
+#include "mem.h"
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-cons_t *cons_init()
-{
-  cons_t *cell = NULL;
-  if ((cell = malloc(sizeof(cons_t *))) == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-  return cell;
-}
-
-void cons_free(cons_t *cell)
-{
-  obj_free(cell->car);
-
-  if (cell->cdr != NULL)
-    cons_free(cell->cdr);
-}
-
-object_t *obj_init()
-{
-  object_t *obj = NULL;
-  if ((obj = malloc(sizeof(object_t *))) == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-  return obj;
-}
-
-void obj_free(object_t *obj)
-{
-  switch(obj->type) {
-    case LIST:
-      cons_free(obj->cell);
-      break;
-
-    case SYMBOL:
-    case STRING:
-      free(obj->string);
-    default:
-      break;
-  }
-  free(obj);
-}
          
 static char *strtype(type_t type)
 {
@@ -88,6 +47,18 @@ static char *strtype(type_t type)
     default: /*builtin*/
       return "procedure";
   }
+}
+int length(cons_t *list)
+{
+  int len = 0;
+  cons_t *head = list;
+
+  while (head != 0)
+  {
+    len++;
+    head = head->cdr;
+  }
+  return len;
 }
 
 int check_arg_type(object_t *obj, int n, ...)
@@ -147,6 +118,49 @@ char *strpred(predicate_t pred)
   }
 }
 
+bool obj_eq(object_t *ob1, object_t *ob2)
+{
+  if (ob1->type == ob2->type) {
+    cons_t *curr1, *curr2;
+    switch(ob1->type) {
+      case INTEGER:
+        return ob1->integer == ob2->integer;
+      case FLOAT:
+        return ob1->flt == ob2->flt;
+      case STRING:
+        return strcmp(ob1->string, ob2->string) == 0;
+      case CHAR:
+        return ob1->character == ob2->character;
+      case SYMBOL:
+        return obj_eq(sym_find(ob1->string),
+                      sym_find(ob2->string));
+      case LIST:
+        if (length(ob1->cell) != length(ob2->cell))
+          return false;
+        curr1 = ob1->cell;
+        curr2 = ob2->cell;
+        
+        while (curr1 != NULL)
+        {
+          if (!obj_eq(curr1->car, curr2->car))
+            return false;
+          curr1 = curr1->cdr;
+          curr2 = curr2->cdr;
+        }
+        return true;
+      case BOOLEAN:
+        return ob1->boolean == ob2->boolean;
+      case OPERATOR:
+        return ob1->operator == ob2->operator;
+      case BUILTIN:
+        return ob1->builtin == ob2->builtin;
+      default: /*PREDICATE*/
+        return ob1->predicate == ob2->predicate;
+    }
+  }
+  return false;
+}
+
 /* Convert the array of tokens to a cons cell, start evaluating at index.
  * index is updated to the index of the token at the end of the sexp.
  */
@@ -197,7 +211,7 @@ cons_t *tok_to_cons(char **tokens, char *types, int *index)
 /* Convert a cons cell to an object */
 object_t *cons_to_object(cons_t *cell)
 {
-  object_t *obj = malloc(sizeof(object_t *));
+  object_t *obj = malloc(sizeof(object_t));
   obj->type = LIST;
   obj->cell = cell;
   return obj;

@@ -16,36 +16,18 @@
  *WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "env.h"
-#include "mem.h"
+#ifndef MEM_H
+#define MEM_H
+
 #include "types.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#include "env.h"
 
-env_t *env_init()
-{
-  env_t *e = malloc(sizeof(env_t));
-  if (e == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-  return e;
-}
+cons_t *cons_init();
+void cons_free(cons_t *cell);
+object_t *obj_init();
+void obj_free(object_t *obj);
+object_t *obj_dup_cell(cons_t *cell);
+object_t *obj_dup(object_t *obj);
+void gc(env_t *env);
 
-/*Initializes the root environment*/
-void env_init()
-{
-  root_env = obj_init();
-  root_env->type = ENVIRONMENT;
-  root_env->env = 
-  head = root_env;
-}
-
-void env_push()
-{
-  head = head->next;
-  head = malloc(sizeof(env_t));
-}
-
+#endif

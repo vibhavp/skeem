@@ -20,6 +20,7 @@
 #define TYPES_H
 #include <stdint.h>
 #include <stdbool.h>
+#include "env.h"
 
 /*Object types.*/
 typedef enum types {
@@ -32,7 +33,8 @@ typedef enum types {
   BOOLEAN,
   BUILTIN,
   OPERATOR,
-  PREDICATE
+  PREDICATE,
+  ENVIRONMENT
 } type_t;
 
 #define LPAREN BUILTIN+1
@@ -74,20 +76,22 @@ struct cons;
 typedef struct _object_t {
   type_t type;
   bool quoted;
+  bool marked;
   union {
-    /*A hackish numeric tower*/
-    union {
-      int64_t integer;
-      double flt;
-    };
+    int64_t integer;
+    double flt;
+    
     char *string;
+    char character;
     struct cons *cell;
-    union {
-      builtin_t builtin;
-      operator_t operator;
-      predicate_t predicate;
-    };
     bool boolean;
+    
+    builtin_t builtin;
+    operator_t operator;
+    predicate_t predicate;
+
+    /*This allows environments to be GC'd*/
+    struct env *env;
   };
 } object_t;
 
@@ -96,14 +100,11 @@ typedef struct cons {
   struct cons *cdr;
 } cons_t;
 
-cons_t *tok_to_cons();
-void cons_free(cons_t *cell);
-object_t *obj_init();
-void obj_free(object_t *obj);
-object_t *obj_dup(object_t *obj);
-cons_t *dup_cell(cons_t *cell);
+cons_t *tok_to_cons(char **tokens, char *types, int *index);
 int check_arg_type(object_t *obj, int n, ...);
 char *strpred(predicate_t pred);
 char *strop(operator_t op);
+int length(cons_t *list);
+bool obj_eq(object_t *ob1, object_t *ob2);
 
 #endif

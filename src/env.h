@@ -20,8 +20,23 @@
 #define ENV_H
 #include "types.h"
 
-object_t *sym_find(char *sym);
-void sym_insert(char *sym, object_t *val);
+struct _object_t;
+
+typedef struct sym {
+  struct _object_t *sym;
+  struct _object_t *val;
+} symbol_t;
+
+typedef struct env {
+  int size;
+  symbol_t **symbol;
+  struct env *next;
+} env_t;
+
+struct _object_t *root_env, *head;
+
+struct _object_t *sym_find(char *sym);
+void sym_insert(char *sym, struct _object_t *val);
 void depth_inc();
 void depth_dec();
 void goto_top();
