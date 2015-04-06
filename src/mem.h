@@ -31,8 +31,7 @@ void cons_free(cons_t *cell);
 object_t *obj_init(type_t type);
 void obj_free(object_t *obj);
 void print_heap();
-void pin();
 void gc();
-void mem_init();
+void heap_init();
 
 #endif

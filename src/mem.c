@@ -29,12 +29,11 @@
 struct obj_list {
   object_t *val;
   struct obj_list *next;
+  struct obj_list *prev;
 };
 
 /*Stores all allocated objects. Used by sweep()*/
 static struct obj_list *heap, *heap_head = NULL;
-/*Pinned objects */
-static struct obj_list *pinned, *pin_head = NULL;
 
 void heap_init()
 {
@@ -44,16 +43,6 @@ void heap_init()
     exit(EXIT_FAILURE);
   }
   heap_head = heap;
-}
-
-void pin_init()
-{
-  pinned = malloc(sizeof(struct obj_list));
-  if (pinned == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-  pin_head = pinned;
 }
 
 void root_env_init()
@@ -79,6 +68,8 @@ struct obj_list *obj_list_init()
     perror("malloc");
     exit(EXIT_FAILURE);
   }
+  n->next = NULL;
+  n->prev = NULL;
   return n;
 }
 
@@ -124,14 +115,12 @@ object_t *obj_init(type_t type)
   }
   obj->type = type;
   obj->marked = false;
+
+  if (heap->val != NULL) {
+    heap_head->next = obj_list_init();
+    heap_head = heap_head->next;
+  }
   
-  if (heap == NULL) {
-    heap_init();
-  }
-  else {
-  heap_head->next = obj_list_init();
-  heap_head = heap_head->next;
-  }
   heap_head->val = obj;
 
   return obj;
@@ -142,6 +131,7 @@ void obj_free(object_t *obj)
   switch(obj->type) {
     case ENVIRONMENT:
       free(obj->env->binding);
+      break;
     case STRING:
     case SYMBOL:
       free(obj->string);
@@ -155,36 +145,6 @@ void obj_free(object_t *obj)
   free(obj);
 }
 
-void pin_cons(struct cons *cell)
-{
-  pin(cell->car);
-  pin(cell->cdr);
-}
-
-void pin(object_t *obj) {
-  if (pin_head == NULL) {
-    pin_init();
-    pin_head = pinned;
-  }
-  
-  else {
-    pin_head = pin_head->next;
-    pin_head = obj_list_init();
-  }
-  
-  pin_head->val = obj;
-  
-  if (obj->type == LIST)
-    pin_cons(obj->cell);
-}
-
-void unpin_head()
-{
-  struct obj_list *cur = pin_head;
-  while (cur != NULL) {
-    
-  }
-}
 
 void mark(object_t *obj)
 {
@@ -212,12 +172,14 @@ static inline void mark_symbol(binding_t *sym)
 
 void mark_all()
 {
-  env_t *cur_env = root_env->env;
+  object_t *cur_env = root_env;
   int i;
   while (cur_env != NULL) {
-    for (i = 0; i < cur_env->size; i++) {
-      mark_symbol(cur_env->binding[i]);
+    
+    for (i = 0; i < cur_env->env->size; i++) {
+      mark_symbol(cur_env->env->binding[i]);
     }
+    cur_env = cur_env->env->next;
   }
   /*mark all environment objects*/
   object_t *cur = root_env->env->next;
@@ -229,7 +191,7 @@ void mark_all()
 
 void sweep()
 {
-  struct obj_list *curr = heap, *prev = NULL;
+  struct obj_list *curr = heap->next, *prev = NULL;
   while (curr != NULL) {
     if (!curr->val->marked)
     {
