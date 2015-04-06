@@ -1,19 +1,23 @@
 /* Copyright © 2015 Vibhav Pant <vibhavp@gmail.com>
 
- *Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *associated documentation files (the “Software”), to deal in the Software without restriction,
- *including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
- *and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
- *subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
 
- *The above copyright notice and this permission notice shall be included in all copies or substantial
- *portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
 
- *THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
- *LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- *IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *LIABILITY,WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- *WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
  */
 
 #include <stdio.h>
@@ -44,23 +48,23 @@ object_t *add(object_t *n1, object_t *n2)
       check_arg_type(n2, 2, INTEGER, FLOAT))
     return NULL;
   
-  object_t *result = obj_init();
+  object_t *result;
 
   if (n1->type == INTEGER || n2->type == INTEGER) {
+    result = obj_init(INTEGER);
     result->integer = n1->integer + n2->flt;
-    result->type = INTEGER;
   }
   else if (n1->type == INTEGER || n2->type == FLOAT) {
+    result = obj_init(FLOAT);
     result->flt = n1->integer + n2->flt;
-    result->type = FLOAT;
   }
   else if (n1->type == FLOAT || n2->type == INTEGER) {
+    result = obj_init(FLOAT);
     result->flt = n1->flt + n2->integer;
-    result->type = FLOAT;
   }
   else {
+    result = obj_init(FLOAT);
     result->flt = n1->flt + n2->flt;
-    result->type = FLOAT;
   }
   return result;
 }
@@ -76,6 +80,9 @@ object_t *subtract(object_t *n1, object_t *n2)
     n2->integer = -n2->integer;
   
   object_t *result = add(n1, n2);
+
+  if (result == NULL)
+    return NULL;
 
   if (n2->type == FLOAT)
     n2->flt = -n2->flt;
@@ -124,7 +131,7 @@ object_t *cdr(object_t *cell)
   if (cell == NULL)
     return NULL;
   
-  object_t *obj = obj_init();
+  object_t *obj = obj_init(LIST);
    obj->cell = cell->cell->cdr;
   return obj;
 }
@@ -343,8 +350,7 @@ void init_globals()
   builtin_t i;
   for (i = AND; i <= QUOTE; i++) {
     object_t *obj;
-    obj  = obj_init();
-    obj->type = BUILTIN;
+    obj  = obj_init(BUILTIN);
     obj->builtin = i;
     sym_insert(builtin_func[i], obj);
   }

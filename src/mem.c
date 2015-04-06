@@ -1,19 +1,23 @@
 /* Copyright © 2015 Vibhav Pant <vibhavp@gmail.com>
 
- *Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- *associated documentation files (the “Software”), to deal in the Software without restriction,
- *including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
- *and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
- *subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
 
- *The above copyright notice and this permission notice shall be included in all copies or substantial
- *portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
 
- *THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
- *LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- *IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *LIABILITY,WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- *WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
  */
 
 #include "mem.h"
@@ -22,37 +26,72 @@
 #include <stdlib.h>
 
 /*Variables for GC purposes*/
+struct obj_list {
+  object_t *val;
+  struct obj_list *next;
+};
 
 /*Stores all allocated objects. Used by sweep()*/
-static object_t **heap = NULL;
-static unsigned int heap_size = 0;
+static struct obj_list *heap, *heap_head = NULL;
+/*Pinned objects */
+static struct obj_list *pinned, *pin_head = NULL;
 
-/*Pinned variables will be marked on a GC cycle*/
-struct pin {
-  object_t *val;
-  struct pin *next;
-};
-static struct pin *pinned, *head;
-
-/*Stores all symbols. Used by mark()*/
-static symbol_t **symbols = NULL;
-static unsigned int nsym = 0; /*Stores the number of symbols to be marked*/
-
-symbol_t *sym_init()
+void heap_init()
 {
-  symbol_t *sym = malloc(sizeof(symbol_t));
-  if (sym == NULL) {
+  heap = malloc(sizeof(struct obj_list));
+  if (heap == NULL) {
     perror("malloc");
     exit(EXIT_FAILURE);
   }
-  symbols = realloc(symbols, sizeof(symbol_t *)*nsym + sizeof(symbol_t *));
-  if (symbols == NULL) {
-    perror("realloc");
+  heap_head = heap;
+}
+
+void pin_init()
+{
+  pinned = malloc(sizeof(struct obj_list));
+  if (pinned == NULL) {
+    perror("malloc");
     exit(EXIT_FAILURE);
   }
-  symbols[nsym++] = sym;
+  pin_head = pinned;
+}
 
-  return sym;
+void root_env_init()
+{
+  root_env = obj_init(ENVIRONMENT);
+  root_env->env = malloc(sizeof(env_t));
+
+  if (root_env->env == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+  
+  root_env->env->size = 0;
+  root_env->env->prev = NULL;
+  
+  env_head = root_env;
+}
+
+struct obj_list *obj_list_init()
+{
+  struct obj_list *n = malloc(sizeof(struct obj_list));
+  if (n == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+  return n;
+}
+
+binding_t *bind_init()
+{
+  binding_t *bind = malloc(sizeof(binding_t));
+
+  if (bind == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+  
+  return bind;
 }
 
 cons_t *cons_init()
@@ -76,73 +115,74 @@ void cons_free(cons_t *cell)
   }
 }
 
-object_t *obj_init()
+object_t *obj_init(type_t type)
 {
   object_t *obj;
-  if ((obj = malloc(sizeof(object_))) == NULL) {
+  if ((obj = malloc(sizeof(object_t))) == NULL) {
     perror("malloc");
     exit(EXIT_FAILURE);
   }
+  obj->type = type;
   obj->marked = false;
-  heap = realloc(heap, sizeof(object_t *)*heap_size + sizeof(object_t *));
-
-  if (heap == NULL) {
-    perror("realloc");
-    exit(EXIT_FAILURE);
-  }
   
-  heap[heap_size++] = obj;
+  if (heap == NULL) {
+    heap_init();
+  }
+  else {
+  heap_head->next = obj_list_init();
+  heap_head = heap_head->next;
+  }
+  heap_head->val = obj;
+
   return obj;
 }
 
 void obj_free(object_t *obj)
 {
   switch(obj->type) {
-    case LIST:
-      cons_free(obj->cell);
-      break;
-
-    case SYMBOL:
+    case ENVIRONMENT:
+      free(obj->env->binding);
     case STRING:
+    case SYMBOL:
       free(obj->string);
+      break;
+    case LIST:
+      free(obj->cell);
+      break;
     default:
-      free(obj);
+      break;
   }
+  free(obj);
 }
-struct pin *alloc_pin()
+
+void pin_cons(struct cons *cell)
 {
-  struct pin *p = malloc(sizeof(struct pin));
-  if (p == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-  return p;
+  pin(cell->car);
+  pin(cell->cdr);
 }
 
 void pin(object_t *obj) {
-
-  if (head == NULL) {
-    pinned = alloc_pin();
-    head = pinned;
+  if (pin_head == NULL) {
+    pin_init();
+    pin_head = pinned;
   }
+  
   else {
-    head->next = alloc_pin();
-    head = head->next;
+    pin_head = pin_head->next;
+    pin_head = obj_list_init();
   }
-  head->val = obj;
+  
+  pin_head->val = obj;
+  
+  if (obj->type == LIST)
+    pin_cons(obj->cell);
 }
 
-void unpin(object_t *obj)
+void unpin_head()
 {
-  struct pin *p = pinned;
-  /*unpinning a non-existing object will result in a segfault*/
-  while (p != NULL) {
-    if (p->next->val == obj) {
-      struct pin *next = p->next->next;
-      free(p->next);
-      p->next = next;
-    }
-    p = p->next;
+  struct obj_list *cur = pin_head;
+  while (cur != NULL) {
+    
   }
 }
 
@@ -164,7 +204,7 @@ void mark(object_t *obj)
   }
 }
 
-static inline void mark_symbol(symbol_t *sym)
+static inline void mark_symbol(binding_t *sym)
 {
   mark(sym->sym);
   mark(sym->val);
@@ -172,22 +212,35 @@ static inline void mark_symbol(symbol_t *sym)
 
 void mark_all()
 {
-  unsigned int i;
-  for (i = 0; i <= nsym; i++) {
-    mark_symbol(symbols[i]);
+  env_t *cur_env = root_env->env;
+  int i;
+  while (cur_env != NULL) {
+    for (i = 0; i < cur_env->size; i++) {
+      mark_symbol(cur_env->binding[i]);
+    }
+  }
+  /*mark all environment objects*/
+  object_t *cur = root_env->env->next;
+  while (cur != NULL) {
+    cur->marked = true;
+    cur = cur->env->next;
   }
 }
 
 void sweep()
 {
-  unsigned int i;
-  for (i = 0; i <= heap_size; i++) {
-    if (!heap[i]->marked) {
-      free(heap[i]);
-      heap_size--;
+  struct obj_list *curr = heap, *prev = NULL;
+  while (curr != NULL) {
+    if (!curr->val->marked)
+    {
+      obj_free(curr->val);
+      if (prev != NULL) {
+        prev->next = curr->next;
+        free(curr);
+      }
     }
-    else
-      heap[i]->marked = false;
+    prev = curr;
+    curr = curr->next;
   }
 }
 
@@ -196,3 +249,36 @@ void gc()
   mark_all();
   sweep();
 }
+
+#define DEBUG
+#ifdef DEBUG
+void print_heap()
+{
+  struct obj_list *curr = heap;
+
+  while (curr != NULL) {
+    object_t *obj = curr->val;
+    switch(obj->type) {
+      case STRING:
+        printf("\"%s\" \n", obj->string);
+        break;
+      case SYMBOL:
+        printf("<symbol> %s\n", obj->string);
+        break;
+      case INTEGER:
+        printf("%ld\n", obj->integer);
+        break;
+      case FLOAT:
+        printf("%f\n", obj->flt);
+        break;
+      case ENVIRONMENT:
+        printf("<environment>\n");
+        break;
+      case LIST:
+        printf("cons cell\n");
+        break;
+    }
+    curr = curr->next;
+  }
+}
+#endif
