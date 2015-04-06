@@ -229,7 +229,7 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
           cond(args) : NULL;
     case LAMBDA:
       /*TODO*/
-      return make_procedure(args->car->cell, args->cdr->car->cell);
+      /* return make_procedure(args->car->cell, args->cdr->car->cell); */
     case NOT:
       return correct_number_args("not", 1, args) ?
           not(eval(args->car)) : NULL;
@@ -264,8 +264,6 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
 
 object_t *apply(object_t *function, cons_t *args)
 {
-  depth_inc();
-  
   switch (function->type) {
     case BUILTIN:
       return call_builtin(function->builtin, args);
@@ -276,7 +274,7 @@ object_t *apply(object_t *function, cons_t *args)
       return correct_number_args(strop(function->operator), 2, args) ?
           call_operator(function->operator, args) : NULL;
     case SYMBOL:
-      function = sym_find(function->string);
+      function = env_lookup(function);
       if (function == NULL) {
         return NULL;
       }
@@ -304,7 +302,6 @@ object_t *apply(object_t *function, cons_t *args)
             return NULL;
         }
         /*Reached the end of function.*/
-        depth_dec();
         return eval(body->car);
       }
     default:
