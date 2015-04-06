@@ -42,7 +42,7 @@ struct _object_t *root_env, *env_head;
 
 void env_push();
 void env_pop();
-void env_insert(env_t *env, struct _object_t *sym, struct _object_t *val);
+void env_insert(struct _object_t *sym, struct _object_t *val);
 struct _object_t *env_lookup(struct _object_t *sym);
 void root_env_init();
 #endif

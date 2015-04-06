@@ -41,11 +41,12 @@ void env_pop()
   env_head->env->next = NULL;
 }
 
-void env_insert(env_t *env, object_t *sym, object_t *val)
+void env_insert(object_t *sym, object_t *val)
 {
   int i;
+  env_t *env = env_head->env;
   env->binding = realloc(env->binding, sizeof(binding_t) * env->size
-                        + sizeof(binding_t));
+                         + sizeof(binding_t));
   if (env->binding == NULL) {
     perror("realloc");
     exit(EXIT_FAILURE);
