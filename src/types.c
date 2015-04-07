@@ -22,13 +22,14 @@
 
 #include "types.h"
 #include "grammar.h"
+#include "builtins.h"
 #include "env.h"
 #include "mem.h"
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
+#include <setjmp.h>
          
 static char *strtype(type_t type)
 {
@@ -52,6 +53,7 @@ static char *strtype(type_t type)
       return "procedure";
   }
 }
+
 int length(cons_t *list)
 {
   int len = 0;
@@ -65,7 +67,7 @@ int length(cons_t *list)
   return len;
 }
 
-int check_arg_type(object_t *obj, int n, ...)
+void check_arg_type(object_t *obj, int n, ...)
 {
   va_list args;
   type_t type;
@@ -79,11 +81,10 @@ int check_arg_type(object_t *obj, int n, ...)
               strtype(obj->type),
               strtype(type));
       va_end(args);
-      return 1;
+      longjmp(err, 1);
     }
   }
   va_end(args);
-  return 0;
 }
 
 char *strop(operator_t op)

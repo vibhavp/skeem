@@ -105,7 +105,7 @@ typedef struct cons {
 } cons_t;
 
 cons_t *tok_to_cons(char **tokens, char *types, int *index);
-int check_arg_type(object_t *obj, int n, ...);
+void check_arg_type(object_t *obj, int n, ...);
 char *strpred(predicate_t pred);
 char *strop(operator_t op);
 int length(cons_t *list);
