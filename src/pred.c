@@ -20,33 +20,29 @@
  *
  */
 
+#include "pred.h"
 #include "types.h"
-#include <setjmp.h>
+#include "builtins.h"
 
-#ifndef BUILTINS_H
-#define BUILTINS_H
+#define PRED_BOOL_OBJ(predicate) ((predicate) ? CONST_TRUE : CONST_FALSE)
 
-object_t *quote(object_t *object);
-object_t *cond(struct cons *clauses);
-object_t *and(object_t *cond1, object_t *cond2);
-object_t *or(object_t *cond1, object_t *cond2);
-object_t *not(object_t *cond);
-object_t *quote(object_t *obj);
-object_t *print(object_t *obj);
-object_t *apply(object_t *function, cons_t *args);
-object_t *eval(object_t *obj);
-object_t *define(object_t *sym, object_t *val);
-object_t *dup_obj(object_t *obj);
-object_t *divide(object_t *n1, object_t *n2);
-object_t *multiply(object_t *n1, object_t *n2);
-object_t *cons(object_t *car, object_t *cdr);
-char *repr(object_t *obj);
-
-/*Used for error handling*/
-jmp_buf err;
-
-extern object_t *builtins[12];
-extern object_t *CONST_TRUE;
-extern object_t *CONST_FALSE;
-
-#endif
+object_t *call_predicate(object_t *obj, predicate_t pred)
+{  
+  switch(pred)
+  {
+    case INTEGER_P:
+      return PRED_BOOL_OBJ(_INTEGER_P(obj));
+    case FLOAT_P:
+      return PRED_BOOL_OBJ(_FLOAT_P(obj));
+    case NUMBER_P:
+      return PRED_BOOL_OBJ(_NUMBER_P(obj));
+    case STRING_P:
+      return PRED_BOOL_OBJ(_STRING_P(obj));
+    case SYMBOL_P:
+      return PRED_BOOL_OBJ(_SYMBOL_P(obj));
+    case LIST_P:
+      return PRED_BOOL_OBJ(_LIST_P(obj));
+    default: /*LAMBDA_P*/
+      return PRED_BOOL_OBJ(_LAMBDA_P(obj));
+  }
+}

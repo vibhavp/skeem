@@ -21,32 +21,20 @@
  */
 
 #include "types.h"
-#include <setjmp.h>
 
-#ifndef BUILTINS_H
-#define BUILTINS_H
+#ifndef PRED_H
+#define PRED_H
 
-object_t *quote(object_t *object);
-object_t *cond(struct cons *clauses);
-object_t *and(object_t *cond1, object_t *cond2);
-object_t *or(object_t *cond1, object_t *cond2);
-object_t *not(object_t *cond);
-object_t *quote(object_t *obj);
-object_t *print(object_t *obj);
-object_t *apply(object_t *function, cons_t *args);
-object_t *eval(object_t *obj);
-object_t *define(object_t *sym, object_t *val);
-object_t *dup_obj(object_t *obj);
-object_t *divide(object_t *n1, object_t *n2);
-object_t *multiply(object_t *n1, object_t *n2);
-object_t *cons(object_t *car, object_t *cdr);
-char *repr(object_t *obj);
+#define _INTEGER_P(n)  ((n)->type == INTEGER)
+#define _FLOAT_P(n)    ((n)->type == FLOAT)
+#define _NUMBER_P(n)   (_INTEGER_P((n)) || _FLOAT_P((n)))
+#define _STRING_P(n)   ((n)->type == STRING)
+#define _SYMBOL_P(n)   ((n)->type == SYMBOL)
+#define _LIST_P(n)     ((n)->type == LIST)
+#define _LAMBDA_P(n)   (_LIST_P((n))                            \
+                        && (n)->cell->car->type == BUILTIN      \
+                        && (n)->cell->car->builtin == LAMBDA)
 
-/*Used for error handling*/
-jmp_buf err;
-
-extern object_t *builtins[12];
-extern object_t *CONST_TRUE;
-extern object_t *CONST_FALSE;
+object_t *call_predicate(object_t *obj, predicate_t pred);
 
 #endif
