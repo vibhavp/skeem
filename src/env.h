@@ -40,9 +40,11 @@ typedef struct env {
 
 struct _object_t *root_env, *env_head;
 
+void root_env_init();
 void env_push();
 void env_pop();
+void goto_top();
 void env_insert(struct _object_t *sym, struct _object_t *val);
 struct _object_t *env_lookup(struct _object_t *sym);
-void root_env_init();
+
 #endif

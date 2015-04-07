@@ -21,11 +21,13 @@
  */
 
 #include "env.h"
+#include "builtins.h"
 #include "mem.h"
 #include "types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <setjmp.h>
 
 void env_push()
 {
@@ -39,6 +41,12 @@ void env_pop()
 {
   env_head = env_head->env->prev;
   env_head->env->next = NULL;
+}
+
+void goto_top()
+{
+  while(env_head->env->prev != NULL)
+    env_pop();
 }
 
 void env_insert(object_t *sym, object_t *val)
@@ -75,5 +83,5 @@ object_t *env_lookup(object_t *sym)
     }
   }
   fprintf(stderr, "Unbound variable: %s", sym->string);
-  return NULL;
+  longjmp(err, 1);
 }
