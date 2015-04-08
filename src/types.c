@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <setjmp.h>
          
-static char *strtype(type_t type)
+char *strtype(type_t type)
 {
   switch(type)
   {
@@ -121,49 +121,6 @@ char *strpred(predicate_t pred)
     default: /*LAMBDA_P*/
       return "lambda?";
   }
-}
-
-bool obj_eq(object_t *ob1, object_t *ob2)
-{
-  if (ob1->type == ob2->type) {
-    cons_t *curr1, *curr2;
-    switch(ob1->type) {
-      case INTEGER:
-        return ob1->integer == ob2->integer;
-      case FLOAT:
-        return ob1->flt == ob2->flt;
-      case STRING:
-        return strcmp(ob1->string, ob2->string) == 0;
-      case CHAR:
-        return ob1->character == ob2->character;
-      case SYMBOL:
-        return obj_eq(sym_find(ob1->string),
-                      sym_find(ob2->string));
-      case LIST:
-        if (length(ob1->cell) != length(ob2->cell))
-          return false;
-        curr1 = ob1->cell;
-        curr2 = ob2->cell;
-        
-        while (curr1 != NULL)
-        {
-          if (!obj_eq(curr1->car, curr2->car))
-            return false;
-          curr1 = curr1->cdr;
-          curr2 = curr2->cdr;
-        }
-        return true;
-      case BOOLEAN:
-        return ob1->boolean == ob2->boolean;
-      case OPERATOR:
-        return ob1->operator == ob2->operator;
-      case BUILTIN:
-        return ob1->builtin == ob2->builtin;
-      default: /*PREDICATE*/
-        return ob1->predicate == ob2->predicate;
-    }
-  }
-  return false;
 }
 
 /* Convert the array of tokens to a cons cell, start evaluating at index.
