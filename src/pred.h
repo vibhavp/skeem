@@ -34,7 +34,7 @@
 #define _LAMBDA_P(n)   (_LIST_P((n))                            \
                         && (n)->cell->car->type == BUILTIN      \
                         && (n)->cell->car->builtin == LAMBDA)
+#define _BOOLEAN_P(n) ((n)->type == BOOLEAN)
 
-object_t *call_predicate(object_t *obj, predicate_t pred);
-
+object_t *call_predicate(cons_t *obj, predicate_t pred);
 #endif
