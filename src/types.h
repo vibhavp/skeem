@@ -51,6 +51,7 @@ typedef enum {
   COND,
   CONS,
   DEFINE,
+  EVAL,
   LAMBDA,
   NOT,
   OR,
@@ -72,7 +73,10 @@ typedef enum {
   STRING_P,
   SYMBOL_P,
   LIST_P,
-  LAMBDA_P
+  LAMBDA_P,
+  BOOLEAN_P,
+  EQV_P,
+  EQUAL_P
 } predicate_t;
 
 struct cons;
@@ -104,11 +108,12 @@ typedef struct cons {
   struct cons *cdr;
 } cons_t;
 
+
 cons_t *tok_to_cons(char **tokens, char *types, int *index);
 void check_arg_type(object_t *obj, int n, ...);
 char *strpred(predicate_t pred);
 char *strop(operator_t op);
 int length(cons_t *list);
-bool obj_eq(object_t *ob1, object_t *ob2);
+char *strtype(type_t type);
 
 #endif
