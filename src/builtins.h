@@ -26,6 +26,9 @@
 #ifndef BUILTINS_H
 #define BUILTINS_H
 
+object_t *add(object_t *n1, object_t *n2);
+object_t *subtract(object_t *n1, object_t *n2);
+object_t *cond(cons_t *clauses);
 object_t *quote(object_t *object);
 object_t *cond(struct cons *clauses);
 object_t *and(object_t *cond1, object_t *cond2);
@@ -45,8 +48,8 @@ char *repr(object_t *obj);
 /*Used for error handling*/
 jmp_buf err;
 
-extern object_t *builtins[26];
-extern object_t *CONST_TRUE;
-extern object_t *CONST_FALSE;
+object_t *builtins[26];
+object_t *CONST_TRUE;
+object_t *CONST_FALSE;
 
 #endif

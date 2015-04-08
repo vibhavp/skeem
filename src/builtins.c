@@ -33,9 +33,6 @@
 
 object_t *add(object_t *n1, object_t *n2)
 {
-  check_arg_type(n1, 2, INTEGER, FLOAT);
-  check_arg_type(n2, 2, INTEGER, FLOAT);
-  
   object_t *result;
 
   if (_INTEGER_P(n1) || _INTEGER_P(n2)) {
@@ -50,33 +47,144 @@ object_t *add(object_t *n1, object_t *n2)
     result = obj_init(FLOAT);
     result->flt = n1->flt + n2->integer;
   }
-  else {
+  else if (_FLOAT_P(n1) || _INTEGER_P(n2)){
     result = obj_init(FLOAT);
     result->flt = n1->flt + n2->flt;
   }
-  
+  else {
+    fprintf(stderr, "add: Wrong argument type(s).");
+    longjmp(err, 1);
+  }
+
   return result;
 }
 
 object_t *subtract(object_t *n1, object_t *n2)
 {
-  
+
   if (_FLOAT_P(n2))
     n2->flt = -n2->flt;
   else if (_INTEGER_P(n2))
     n2->integer = -n2->integer;
-  
+
   object_t *result = add(n1, n2);
 
   if (_FLOAT_P(n2))
     n2->flt = -n2->flt;
   else if (_INTEGER_P(n2))
     n2->integer = -n2->integer;
-  
+
   return result;
 }
 
-/*(cond                                     _  
+#define NUMBER(n) (((n)->type == INTEGER) ? n->integer : n->flt)
+
+object_t *divide(object_t *n1, object_t *n2)
+{
+  if (_NUMBER_P(n1) && _NUMBER_P(n2)) {
+    object_t *result = obj_init(FLOAT);
+    result->flt = NUMBER(n1) / NUMBER(n2);
+
+    return result;
+  }
+
+  fprintf(stderr, "divide: Wrong argument type(s)");
+  longjmp(err, 1);
+}
+
+object_t *multiply(object_t *n1, object_t *n2)
+{
+  object_t *result;
+
+  if (_INTEGER_P(n1) || _INTEGER_P(n2)) {
+    result = obj_init(INTEGER);
+    result->integer = n1->integer * n2->flt;
+  }
+  else if (_INTEGER_P(n1) || _FLOAT_P(n2)) {
+    result = obj_init(FLOAT);
+    result->flt = n1->integer * n2->flt;
+  }
+  else if (_FLOAT_P(n1) || _INTEGER_P(n2)) {
+    result = obj_init(FLOAT);
+    result->flt = n1->flt * n2->integer;
+  }
+  else if (_FLOAT_P(n1) || _INTEGER_P(n2)){
+    result = obj_init(FLOAT);
+    result->flt = n1->flt * n2->flt;
+  }
+  else {
+    fprintf(stderr, "add: Wrong argument type(s).");
+    longjmp(err, 1);
+  }
+
+  return result;
+}
+
+#define IS_FALSE(val) (_BOOLEAN_P((val)) && !(val)->boolean)
+#define IS_TRUE(val) (!IS_FALSE((val)))
+
+object_t *and(object_t *test1, object_t *test2)
+{
+  object_t *val1 = eval(test1);
+  if (IS_FALSE(val1))
+    return val1;
+
+  return eval(test2);
+
+}
+
+object_t *or(object_t *test1, object_t *test2)
+{
+  object_t *val1 = eval(test1);
+  if (IS_TRUE(val1))
+    return val1;
+
+  return eval(test2);
+}
+
+inline object_t *not(object_t *obj)
+{
+  return IS_TRUE(eval(obj)) ? CONST_TRUE : CONST_FALSE;
+}
+
+object_t *print(object_t *obj)
+{
+  switch (obj->type) {
+    case INTEGER:
+      printf("%ld", obj->integer);
+      break;
+    case FLOAT:
+      printf("%f", obj->flt);
+    case STRING:
+      printf("%s", obj->string);
+      break;
+    case CHAR:
+      printf("%c", obj->character);
+      break;
+    case BOOLEAN:
+      printf("%d", obj->boolean);
+      break;
+    default:
+      fprintf(stderr, "Type %s isn't printable.\n", strtype(obj->type));
+      longjmp(err, -1);
+  }
+
+  return obj;
+}
+
+object_t *cons(object_t *obj1, object_t *obj2)
+{
+  object_t *cons = obj_init(LIST);
+
+  cons->cell = cons_init();
+  cons->cell->car = obj1;
+  cons->cell->cdr = cons_init();
+  cons->cell->cdr->car = obj2;
+
+  return cons;
+}
+
+/*(cond                                     _
   (                                          |
   ((cond1) (body)) <- clauses->car->cell     |
   ((cond2) (body)) <- clauses->cdr->car->cell| <- clauses
@@ -84,16 +192,16 @@ object_t *subtract(object_t *n1, object_t *n2)
   )                                         -
  */
 object_t *cond(cons_t *clauses)
-{  
+{
   cons_t *curr_cell = clauses, *clause;
   object_t *val;
   int clause_no = 1;
-  
+
   do {
     clause = curr_cell->car->cell;
     val = eval(clause->car);
     /*Evaluate body if clause condition doesnt evaluate to #f*/
-    if (_BOOLEAN_P(val)&& !val->boolean) {
+    if (IS_FALSE(val)) {
       if (clause->cdr == NULL) {
         fprintf(stderr, "No consequent for clause %d", clause_no);
         longjmp(err, 1);
@@ -102,13 +210,14 @@ object_t *cond(cons_t *clauses)
     }
     curr_cell = curr_cell->cdr;
   }while(curr_cell != NULL);
+
   /*None of conditions are true*/
   fprintf(stderr, "None of the conditions in cond expression are true.");
   longjmp(err, 1);
 }
 
 object_t *cdr(object_t *cell)
-{ 
+{
   object_t *obj = obj_init(LIST);
    obj->cell = cell->cell->cdr;
   return obj;
@@ -119,8 +228,25 @@ inline object_t *car(cons_t *cell)
   return cell->car;
 }
 
+object_t *define(object_t *sym, object_t *val)
+{
+  if (!_SYMBOL_P(sym))
+    env_insert(sym, val);
+  else {
+    fprintf(stderr, "Wrong argument type - %s (needed symbol)", strtype(sym->type));
+    longjmp(err, 1);
+  }
+
+  return val;
+}
+
+inline object_t *quote(object_t *obj)
+{
+  return obj;
+}
+
 static object_t *call_operator(operator_t op, cons_t *args)
-{ 
+{
   switch (op) {
     case ADD:
       return add(eval(args->car), eval(args->cdr->car));
@@ -164,7 +290,7 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
       obj.cell = args;
       rtrn = cdr(eval(&obj));
       return rtrn;
-        
+
     case CONS:
       correct_number_args("cons", 1, args);
       return cons(args->car, args->cdr->car);
@@ -231,9 +357,9 @@ object_t *apply(object_t *function, cons_t *args)
         cons_t *args_head = args;
         /*The lambda's body */
         cons_t *body = function->cell->cdr->cdr->car->cell;
-    
+
         correct_number_args(repr(function), length(parameters), args);
-        
+
         while (parameters != NULL) {
           env_insert(parameters->car, args_head->car);
           args_head = args_head->cdr;
@@ -255,8 +381,6 @@ object_t *apply(object_t *function, cons_t *args)
 /* Evaluate object */
 object_t *eval(object_t *obj)
 {
-  
-  if (!obj->quoted) {
     switch (obj->type)
     {
       case LIST:
@@ -268,13 +392,10 @@ object_t *eval(object_t *obj)
         return apply(obj->cell->car, obj->cell->cdr);
       case SYMBOL:
         return eval(env_lookup(obj));
-      
+
       default:
         return obj;
     }
-  }
-  /*Quoted object*/
-  return obj;
 }
 
 /*Initialize all builtins, including procedures, predicates, and operators*/
@@ -282,20 +403,36 @@ void builtins_init()
 {
   for (builtin_t i = AND; i <= QUOTE; i++) {
     builtins[i] = malloc(sizeof(object_t));
+    if (builtins[i] == NULL) {
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
     builtins[i]->type = BUILTIN;
     builtins[i]->builtin = i;
   }
 
   for (operator_t i = ADD; i <= MULTIPLY; i++) {
-    builtins[QUOTE+i] = malloc(sizeof(object_t));
-    builtins[i]->type = OPERATOR;
-    builtins[i]->operator = ADD;
+    int index = QUOTE+i;
+
+    builtins[index] = malloc(sizeof(object_t));
+    if (builtins[index] == NULL) {
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
+    builtins[index]->type = OPERATOR;
+    builtins[index]->operator = ADD;
   }
 
   for(predicate_t i = INTEGER_P; i <= EQUAL_P; i++) {
-    builtins[MULTIPLY+i] = malloc(sizeof(object_t));
-    builtins[i]->type = PREDICATE;
-    builtins[i]->predicate = i;
+    int index = MULTIPLY+i;
+
+    builtins[index] = malloc(sizeof(object_t));
+    if (builtins[index] == NULL) {
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
+    builtins[index]->type = PREDICATE;
+    builtins[index]->predicate = i;
   }
 }
 
