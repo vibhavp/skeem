@@ -61,16 +61,16 @@ object_t *add(object_t *n1, object_t *n2)
 object_t *subtract(object_t *n1, object_t *n2)
 {
   
-  if (n2->type == FLOAT)
+  if (_FLOAT_P(n2))
     n2->flt = -n2->flt;
-  else if (n2->type == INTEGER)
+  else if (_INTEGER_P(n2))
     n2->integer = -n2->integer;
   
   object_t *result = add(n1, n2);
 
-  if (n2->type == FLOAT)
+  if (_FLOAT_P(n2))
     n2->flt = -n2->flt;
-  else if (n2->type == INTEGER)
+  else if (_INTEGER_P(n2))
     n2->integer = -n2->integer;
   
   return result;
@@ -92,8 +92,8 @@ object_t *cond(cons_t *clauses)
   do {
     clause = curr_cell->car->cell;
     val = eval(clause->car);
-    /*Evaluate body if clause condition doesnt evaluate to f*/
-    if (val->type == BOOLEAN && !val->boolean) {
+    /*Evaluate body if clause condition doesnt evaluate to #f*/
+    if (_BOOLEAN_P(val)&& !val->boolean) {
       if (clause->cdr == NULL) {
         fprintf(stderr, "No consequent for clause %d", clause_no);
         longjmp(err, 1);
@@ -216,7 +216,7 @@ object_t *apply(object_t *function, cons_t *args)
       return call_builtin(function->builtin, args);
     case PREDICATE:
       correct_number_args(strpred(function->predicate), 1, args);
-      return call_predicate(args->car, function->predicate);
+      return call_predicate(args, function->predicate);
     case OPERATOR:
       correct_number_args(strop(function->operator), 2, args);
       return call_operator(function->operator, args);
@@ -277,15 +277,29 @@ object_t *eval(object_t *obj)
   return obj;
 }
 
-void init_globals()
+/*Initialize all builtins, including procedures, predicates, and operators*/
+void builtins_init()
 {
-  char *builtin_func[] = {"and", "car", "cdr", "cons", "define", "eval",
-                          "if", "lambda", "not", "or", "print", "quote"};
-  builtin_t i;
-  for (i = AND; i <= QUOTE; i++) {
-    object_t *obj;
-    obj  = obj_init(BUILTIN);
-    obj->builtin = i;
-    env_insert(builtin_func[i], obj);
+  for (builtin_t i = AND; i <= QUOTE; i++) {
+    builtins[i] = malloc(sizeof(object_t));
+    builtins[i]->type = BUILTIN;
+    builtins[i]->builtin = i;
+  }
+
+  for (operator_t i = ADD; i <= MULTIPLY; i++) {
+    builtins[QUOTE+i] = malloc(sizeof(object_t));
+    builtins[i]->type = OPERATOR;
+    builtins[i]->operator = ADD;
+  }
+
+  for(predicate_t i = INTEGER_P; i <= EQUAL_P; i++) {
+    builtins[MULTIPLY+i] = malloc(sizeof(object_t));
+    builtins[i]->type = PREDICATE;
+    builtins[i]->predicate = i;
   }
 }
+
+/* Local Variables:  */
+/* mode: c           */
+/* flycheck-gcc-args: ("-std=gnu11") */
+/* End:              */
