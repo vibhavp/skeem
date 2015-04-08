@@ -35,6 +35,9 @@ struct obj_list {
 /*Stores all allocated objects. Used by sweep()*/
 static struct obj_list *heap = NULL, *heap_head = NULL;
 
+/*Pinned objects get marked every GC cycle*/
+static struct obj_list *pinned = NULL, *pin_head = NULL;
+
 void heap_init()
 {
   heap = malloc(sizeof(struct obj_list));
@@ -90,6 +93,58 @@ binding_t *bind_init()
   return bind;
 }
 
+void pin(object_t *obj)
+{
+
+#ifdef DEBUG
+  printf("Pinned object\n");
+#endif
+  if (pinned == NULL) {
+    pinned = obj_list_init();
+    pin_head = pinned;
+  }
+  else {
+    pin_head->next = obj_list_init();
+    pin_head->next->prev = pin_head;
+    pin_head = pin_head->next;
+  }
+
+  pin_head->val = obj;
+}
+
+void unpin(object_t *obj)
+{
+  struct obj_list *curr = pin_head, *next = NULL;
+
+#ifdef DEBUG
+  printf("Unpinned object\n");
+#endif
+  while (curr != NULL) {
+
+    if (curr->val == obj) {
+      if (next != NULL) {
+        next->prev = curr->prev;
+        free(curr);
+        curr = next->prev;
+      }
+      else {
+        /*the object on pin_head is being unpinned*/
+        if (pinned == pin_head)
+          pinned = NULL;
+        
+        pin_head = pin_head->prev;
+        free(curr);
+        curr = pin_head;
+      }
+      obj->marked = false;
+    }
+    else {
+      next = curr;
+      curr = curr->prev;
+    }
+  }
+}
+
 cons_t *cons_init()
 {
   cons_t *cell = NULL;
@@ -97,6 +152,9 @@ cons_t *cons_init()
     perror("malloc");
     exit(EXIT_FAILURE);
   }
+  cell->car = NULL;
+  cell->cdr = NULL;
+
   return cell;
 }
 
@@ -199,15 +257,21 @@ void mark_all()
     cur->marked = true;
     cur = cur->env->next;
   }
+  /*mark all pinned objects*/
+  struct obj_list *cur_pin = pinned;
+  while (cur_pin != NULL) {
+    mark(cur_pin->val);
+    cur_pin = cur_pin->next;
+  }
 }
 
 void sweep()
 {
   struct obj_list *curr = heap, *prev = NULL;
+
   while (curr != NULL) {
 
-    if (!curr->val->marked)
-    {
+    if (!curr->val->marked) {
       obj_free(curr->val);
       if (prev != NULL) {
         prev->next = curr->next;
@@ -238,10 +302,9 @@ void gc()
 }
 
 #ifdef DEBUG
-void print_heap()
+void print_obj_list(struct obj_list *list)
 {
-  struct obj_list *curr = heap;
-  printf("Printing current heap: \n");
+  struct obj_list *curr = list;
 
   while (curr != NULL) {
     object_t *obj = curr->val;
@@ -268,4 +331,17 @@ void print_heap()
     curr = curr->next;
   }
 }
+
+inline void print_heap()
+{
+  printf("Current heap: \n");
+  print_obj_list(heap);
+}
+
+inline void print_pinned()
+{
+  printf("Pinned objects: \n");
+  print_obj_list(pinned);
+}
+
 #endif

@@ -30,8 +30,14 @@ cons_t *cons_init();
 void cons_free(cons_t *cell);
 object_t *obj_init(type_t type);
 void obj_free(object_t *obj);
-void print_heap();
 void gc();
 void heap_init();
+void pin(object_t *obj);
+void unpin(object_t *obj);
+
+#ifdef DEBUG
+inline void print_heap();
+inline void print_pinned();
+#endif
 
 #endif
