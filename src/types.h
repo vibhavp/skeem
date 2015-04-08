@@ -83,7 +83,6 @@ struct cons;
 
 typedef struct _object_t {
   type_t type;
-  bool quoted;
   bool marked;
   union {
     int64_t integer;
