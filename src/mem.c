@@ -33,7 +33,7 @@ struct obj_list {
 };
 
 /*Stores all allocated objects. Used by sweep()*/
-static struct obj_list *heap, *heap_head = NULL;
+static struct obj_list *heap = NULL, *heap_head = NULL;
 
 void heap_init()
 {
@@ -47,17 +47,22 @@ void heap_init()
 
 void root_env_init()
 {
-  root_env = obj_init(ENVIRONMENT);
+  root_env = malloc(sizeof(object_t));
+  if (root_env == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+  root_env->type = ENVIRONMENT;
   root_env->env = malloc(sizeof(env_t));
 
   if (root_env->env == NULL) {
     perror("malloc");
     exit(EXIT_FAILURE);
   }
-  
+
   root_env->env->size = 0;
   root_env->env->prev = NULL;
-  
+
   env_head = root_env;
 }
 
@@ -81,7 +86,7 @@ binding_t *bind_init()
     perror("malloc");
     exit(EXIT_FAILURE);
   }
-  
+
   return bind;
 }
 
@@ -116,13 +121,20 @@ object_t *obj_init(type_t type)
   obj->type = type;
   obj->marked = false;
 
-  if (heap->val != NULL) {
+  /*if heap_head->val == NULL, this is the first object in the heap*/
+  if (heap_head != NULL) {
     heap_head->next = obj_list_init();
+    heap_head->next->prev = heap_head;
     heap_head = heap_head->next;
   }
-  
-  heap_head->val = obj;
 
+  else
+    heap_init();
+
+  heap_head->val = obj;
+#ifdef DEBUG
+  printf("Allocated object type %s\n", strtype(type));
+#endif
   return obj;
 }
 
@@ -150,13 +162,13 @@ void mark(object_t *obj)
 {
   if (obj->marked)
     return;
-  
+
   obj->marked = true;
 
   if (obj->type == LIST) {
     cons_t *head = obj->cell->cdr;
     mark(obj->cell->car);
-    
+
     if (head != NULL) {
       mark(head->car);
       head = head->cdr;
@@ -175,7 +187,7 @@ void mark_all()
   object_t *cur_env = root_env;
   int i;
   while (cur_env != NULL) {
-    
+
     for (i = 0; i < cur_env->env->size; i++) {
       mark_symbol(cur_env->env->binding[i]);
     }
@@ -191,47 +203,60 @@ void mark_all()
 
 void sweep()
 {
-  struct obj_list *curr = heap->next, *prev = NULL;
+  struct obj_list *curr = heap, *prev = NULL;
   while (curr != NULL) {
+
     if (!curr->val->marked)
     {
       obj_free(curr->val);
       if (prev != NULL) {
         prev->next = curr->next;
         free(curr);
+        curr = prev->next;
+      }
+      else {
+        /*the first object on the heap is being freed*/
+        heap = heap->next;
+        free(curr);
+        curr = heap;
       }
     }
-    prev = curr;
-    curr = curr->next;
+    else {
+      prev = curr;
+      curr = curr->next;
+    }
   }
 }
 
 void gc()
 {
+#ifdef DEBUG
+  printf("Started GC cycle\n");
+#endif
   mark_all();
   sweep();
 }
 
-#define DEBUG
 #ifdef DEBUG
 void print_heap()
 {
   struct obj_list *curr = heap;
+  printf("Printing current heap: \n");
 
   while (curr != NULL) {
     object_t *obj = curr->val;
     switch(obj->type) {
       case STRING:
-        printf("\"%s\" \n", obj->string);
+        printf("<string>\t\"%s\" \n", obj->string);
         break;
       case SYMBOL:
-        printf("<symbol> %s\n", obj->string);
+        printf("<symbol>\t%s\n", obj->string);
         break;
       case INTEGER:
-        printf("%ld\n", obj->integer);
+        printf("<integer>\t%ld\n", obj->integer);
         break;
       case FLOAT:
-        printf("%f\n", obj->flt);
+        printf("<float>\t%f\n", obj->flt);
         break;
       case ENVIRONMENT:
         printf("<environment>\n");

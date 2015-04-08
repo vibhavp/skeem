@@ -66,15 +66,17 @@ void env_insert(object_t *sym, object_t *val)
       return;
     }
   }
-  
-  env->binding[env->size++]->sym = sym;
+
+  env->binding[env->size] = malloc(sizeof(binding_t));
+  env->binding[env->size]->sym = sym;
   env->binding[env->size]->val = val;
+  env->size++;
 }
 
 object_t *env_lookup(object_t *sym)
 {
   env_t *cur_env = env_head->env;
-  
+
   while (cur_env != NULL) {
     int i;
     for (i = 0; i < cur_env->size; i++) {
