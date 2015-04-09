@@ -20,10 +20,10 @@
  *
  */
 
-#include "types.h"
 
 #ifndef PRED_H
 #define PRED_H
+#include "types.h"
 
 #define _INTEGER_P(n)  ((n)->type == INTEGER)
 #define _FLOAT_P(n)    ((n)->type == FLOAT)
@@ -36,5 +36,5 @@
                         && (n)->cell->car->builtin == LAMBDA)
 #define _BOOLEAN_P(n) ((n)->type == BOOLEAN)
 
-object_t *call_predicate(cons_t *obj, predicate_t pred);
+extern object_t *call_predicate(cons_t *obj, predicate_t pred);
 #endif

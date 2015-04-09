@@ -163,7 +163,7 @@ object_t *obj_init(type_t type)
   }
   obj->type = type;
   obj->marked = false;
-
+  
   /*if heap_head->val == NULL, this is the first object in the heap*/
   if (heap_head != NULL) {
     heap_head->next = obj_list_init();
@@ -286,7 +286,8 @@ void gc()
   sweep();
 }
 
-#ifdef DEBUG
+
+
 void print_obj_list(struct obj_list *list)
 {
   struct obj_list *curr = list;
@@ -322,16 +323,14 @@ void print_obj_list(struct obj_list *list)
   }
 }
 
-inline void print_heap()
+void print_heap()
 {
   printf("Current heap: \n");
   print_obj_list(heap);
 }
 
-inline void print_pinned()
+void print_pinned()
 {
   printf("Pinned objects: \n");
   print_obj_list(pinned);
 }
-
-#endif

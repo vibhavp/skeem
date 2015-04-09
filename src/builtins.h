@@ -20,30 +20,28 @@
  *
  */
 
+#ifndef BUILTINS_H
+#define BUILTINS_H
 #include "types.h"
 #include <setjmp.h>
 
-#ifndef BUILTINS_H
-#define BUILTINS_H
-
-object_t *add(object_t *n1, object_t *n2);
-object_t *subtract(object_t *n1, object_t *n2);
-object_t *cond(cons_t *clauses);
-object_t *quote(object_t *object);
-object_t *cond(struct cons *clauses);
-object_t *and(object_t *cond1, object_t *cond2);
-object_t *or(object_t *cond1, object_t *cond2);
-object_t *not(object_t *cond);
-object_t *quote(object_t *obj);
-object_t *print(object_t *obj);
-object_t *apply(object_t *function, cons_t *args);
-object_t *eval(object_t *obj);
-object_t *define(object_t *sym, object_t *val);
-object_t *dup_obj(object_t *obj);
-object_t *divide(object_t *n1, object_t *n2);
-object_t *multiply(object_t *n1, object_t *n2);
-object_t *cons(object_t *car, object_t *cdr);
-char *repr(object_t *obj);
+extern object_t *add(object_t *n1, object_t *n2);
+extern object_t *subtract(object_t *n1, object_t *n2);
+extern object_t *cond(cons_t *clauses);
+extern object_t *quote(object_t *object);
+extern object_t *cond(struct cons *clauses);
+extern object_t *and(object_t *cond1, object_t *cond2);
+extern object_t *or(object_t *cond1, object_t *cond2);
+extern object_t *not(object_t *cond);
+extern object_t *quote(object_t *obj);
+extern object_t *print(object_t *obj);
+extern object_t *apply(object_t *function, cons_t *args);
+extern object_t *eval(object_t *obj);
+extern object_t *define(object_t *sym, object_t *val);
+extern object_t *dup_obj(object_t *obj);
+extern object_t *divide(object_t *n1, object_t *n2);
+extern object_t *multiply(object_t *n1, object_t *n2);
+extern object_t *cons(object_t *car, object_t *cdr);
 
 /*Used for error handling*/
 jmp_buf err;

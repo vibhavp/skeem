@@ -20,7 +20,6 @@
  *
  */
 
-#include "types.h"
 #include "grammar.h"
 #include "builtins.h"
 #include "env.h"
@@ -30,7 +29,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <setjmp.h>
-         
+#include "types.h"
+
 char *strtype(type_t type)
 {
   switch(type)
@@ -67,26 +67,6 @@ int length(cons_t *list)
   return len;
 }
 
-void check_arg_type(object_t *obj, int n, ...)
-{
-  va_list args;
-  type_t type;
-  int i;
-  
-  va_start(args, n);
-  for (i = 0; i < n; i++) {
-    type = va_arg(args, type_t);
-    if (obj->type != type) {
-      fprintf(stderr, "Wrong argument type - %s (wanted %s).",
-              strtype(obj->type),
-              strtype(type));
-      va_end(args);
-      longjmp(err, 1);
-    }
-  }
-  va_end(args);
-}
-
 char *strop(operator_t op)
 {
   switch(op)
@@ -100,6 +80,11 @@ char *strop(operator_t op)
     default: /*Multiply*/
       return "*";
   }
+}
+
+char *repr(object_t *obj)
+{
+  return NULL;
 }
 
 char *strpred(predicate_t pred)
@@ -168,13 +153,4 @@ cons_t *tok_to_cons(char **tokens, char *types, int *index)
   }
   /* Reached last element of current cons cell */
   return cell;
-}
-
-/* Convert a cons cell to an object */
-object_t *cons_to_object(cons_t *cell)
-{
-  object_t *obj = malloc(sizeof(object_t));
-  obj->type = LIST;
-  obj->cell = cell;
-  return obj;
 }

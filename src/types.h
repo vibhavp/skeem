@@ -108,11 +108,11 @@ typedef struct cons {
 } cons_t;
 
 
-cons_t *tok_to_cons(char **tokens, char *types, int *index);
-void check_arg_type(object_t *obj, int n, ...);
-char *strpred(predicate_t pred);
-char *strop(operator_t op);
-int length(cons_t *list);
-char *strtype(type_t type);
+extern cons_t *tok_to_cons(char **tokens, char *types, int *index);
+extern char *strpred(predicate_t pred);
+extern char *strop(operator_t op);
+extern int length(cons_t *list);
+extern char *strtype(type_t type);
+extern char *repr(object_t *obj);
 
 #endif

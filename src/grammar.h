@@ -20,12 +20,12 @@
  *
  */
 
-#include "types.h"
-#include <string.h>
 #ifndef GRAMMAR_H
 #define GRAMMAR_H
+#include "types.h"
+#include <string.h>
 
 /* An array of tokens, and their types for the current input*/
 
-void token_add(char *str, const char type);
+extern void token_add(char *str, const char type);
 #endif

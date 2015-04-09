@@ -26,18 +26,16 @@
 #include "types.h"
 #include "env.h"
 
-cons_t *cons_init();
-void cons_free(cons_t *cell);
-object_t *obj_init(type_t type);
-void obj_free(object_t *obj);
-void gc();
-void heap_init();
-void pin(object_t *obj);
-void unpin_head();
+extern cons_t *cons_init();
+extern void cons_free(cons_t *cell);
+extern object_t *obj_init(type_t type);
+extern void obj_free(object_t *obj);
+extern void gc();
+extern void heap_init();
+extern void pin(object_t *obj);
+extern void unpin_head();
 
-#ifdef DEBUG
-inline void print_heap();
-inline void print_pinned();
-#endif
+extern void print_heap();
+extern void print_pinned();
 
 #endif
