@@ -37,7 +37,7 @@ object_t *add(object_t *n1, object_t *n2)
 
   if (_INTEGER_P(n1) || _INTEGER_P(n2)) {
     result = obj_init(INTEGER);
-    result->integer = n1->integer + n2->flt;
+    result->integer = n1->integer + n2->integer;
   }
   else if (_INTEGER_P(n1) || _FLOAT_P(n2)) {
     result = obj_init(FLOAT);
@@ -47,7 +47,7 @@ object_t *add(object_t *n1, object_t *n2)
     result = obj_init(FLOAT);
     result->flt = n1->flt + n2->integer;
   }
-  else if (_FLOAT_P(n1) || _INTEGER_P(n2)){
+  else if (_FLOAT_P(n1) || _FLOAT_P(n2)){
     result = obj_init(FLOAT);
     result->flt = n1->flt + n2->flt;
   }
@@ -98,7 +98,7 @@ object_t *multiply(object_t *n1, object_t *n2)
 
   if (_INTEGER_P(n1) || _INTEGER_P(n2)) {
     result = obj_init(INTEGER);
-    result->integer = n1->integer * n2->flt;
+    result->integer = n1->integer * n2->integer;
   }
   else if (_INTEGER_P(n1) || _FLOAT_P(n2)) {
     result = obj_init(FLOAT);
@@ -108,7 +108,7 @@ object_t *multiply(object_t *n1, object_t *n2)
     result = obj_init(FLOAT);
     result->flt = n1->flt * n2->integer;
   }
-  else if (_FLOAT_P(n1) || _INTEGER_P(n2)){
+  else if (_FLOAT_P(n1) || _FLOAT_P(n2)){
     result = obj_init(FLOAT);
     result->flt = n1->flt * n2->flt;
   }
@@ -230,7 +230,7 @@ inline object_t *car(cons_t *cell)
 
 object_t *define(object_t *sym, object_t *val)
 {
-  if (!_SYMBOL_P(sym))
+  if (_SYMBOL_P(sym))
     env_insert(sym, val);
   else {
     fprintf(stderr, "Wrong argument type - %s (needed symbol)", strtype(sym->type));
@@ -389,7 +389,15 @@ object_t *eval(object_t *obj)
           goto_top();
           return NULL;
         }
-        return apply(obj->cell->car, obj->cell->cdr);
+        cons_t *cur = obj->cell->cdr;
+        while (cur != NULL) {
+          pin(cur->car);
+          cur = cur->cdr;
+        }
+        object_t *val = apply(obj->cell->car, obj->cell->cdr);
+        for (int i = 0; i < length(obj->cell->cdr); i++)
+          unpin_head();
+        return val;
       case SYMBOL:
         return eval(env_lookup(obj));
 
@@ -412,7 +420,7 @@ void builtins_init()
   }
 
   for (operator_t i = ADD; i <= MULTIPLY; i++) {
-    int index = QUOTE+i;
+    int index = QUOTE+i+1;
 
     builtins[index] = malloc(sizeof(object_t));
     if (builtins[index] == NULL) {
@@ -420,11 +428,11 @@ void builtins_init()
       exit(EXIT_FAILURE);
     }
     builtins[index]->type = OPERATOR;
-    builtins[index]->operator = ADD;
+    builtins[index]->operator = i;
   }
 
   for(predicate_t i = INTEGER_P; i <= EQUAL_P; i++) {
-    int index = MULTIPLY+i;
+    int index = MULTIPLY+QUOTE+i+2;
 
     builtins[index] = malloc(sizeof(object_t));
     if (builtins[index] == NULL) {
@@ -434,6 +442,9 @@ void builtins_init()
     builtins[index]->type = PREDICATE;
     builtins[index]->predicate = i;
   }
+#ifdef DEBUG
+  printf("Initialised builtins\n");
+#endif
 }
 
 /* Local Variables:  */

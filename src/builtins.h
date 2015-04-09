@@ -42,6 +42,7 @@ extern object_t *dup_obj(object_t *obj);
 extern object_t *divide(object_t *n1, object_t *n2);
 extern object_t *multiply(object_t *n1, object_t *n2);
 extern object_t *cons(object_t *car, object_t *cdr);
+extern void builtins_init();
 
 /*Used for error handling*/
 jmp_buf err;
