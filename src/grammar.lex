@@ -54,14 +54,14 @@
 [ \t] ;
 -*[0-9]+           {token_add(strdup(yytext), INTEGER);}
 -*[0-9]+\.[0-9]+   {token_add(strdup(yytext), FLOAT);}
--                  {token_add(strdup(yytext), SYMBOL);}
-+                  {token_add(strdup(yytext), SYMBOL);}
-*                  {token_add(strdup(yytext), SYMBOL);}
-/                  {token_add(strdup(yytext), SYMBOL);}
+\-                  {token_add(strdup(yytext), SYMBOL);}
+\+                  {token_add(strdup(yytext), SYMBOL);}
+\*                  {token_add(strdup(yytext), SYMBOL);}
+\/                  {token_add(strdup(yytext), SYMBOL);}
 \"([^\\\"]|\\.)*\" {token_add(strdup(yytext), STRING);};
 [a-zA-Z0-9]+       {token_add(strdup(yytext), SYMBOL);}
 \(                 {token_add(strdup("("), LPAREN); depth++;}
-\)                 {token_add(strdup(")"), RPAREN);depth--; unsigned int index = 1; if (depth == 0)tok_to_cons(tokens, types, &index)));}
+\)                 {;}
 %%
 
 main(int argc, char *argv[]) {
