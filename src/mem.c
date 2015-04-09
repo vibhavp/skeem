@@ -112,36 +112,21 @@ void pin(object_t *obj)
   pin_head->val = obj;
 }
 
-void unpin(object_t *obj)
+void unpin_head()
 {
-  struct obj_list *curr = pin_head, *next = NULL;
-
 #ifdef DEBUG
-  printf("Unpinned object\n");
+  printf("Unpinned head.\n");
 #endif
-  while (curr != NULL) {
+  pin_head->val->marked = false;
+  if (pin_head != pinned) {
+    pin_head = pin_head->prev;
+    free(pin_head->next);
+  }
 
-    if (curr->val == obj) {
-      if (next != NULL) {
-        next->prev = curr->prev;
-        free(curr);
-        curr = next->prev;
-      }
-      else {
-        /*the object on pin_head is being unpinned*/
-        if (pinned == pin_head)
-          pinned = NULL;
-        
-        pin_head = pin_head->prev;
-        free(curr);
-        curr = pin_head;
-      }
-      obj->marked = false;
-    }
-    else {
-      next = curr;
-      curr = curr->prev;
-    }
+  else { /*The only pinned object is unpinned*/
+    free(pinned);
+    pin_head = NULL;
+    pinned = NULL;
   }
 }
 
@@ -327,6 +312,11 @@ void print_obj_list(struct obj_list *list)
       case LIST:
         printf("cons cell\n");
         break;
+      case CHAR:
+        /* printf("<character>\t"); */
+        /* putchar(obj->character); */
+        /* printf("\n"); */
+        printf("<character> '%c'\n", obj->character);
     }
     curr = curr->next;
   }

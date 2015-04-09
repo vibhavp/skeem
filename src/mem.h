@@ -33,7 +33,7 @@ void obj_free(object_t *obj);
 void gc();
 void heap_init();
 void pin(object_t *obj);
-void unpin(object_t *obj);
+void unpin_head();
 
 #ifdef DEBUG
 inline void print_heap();
