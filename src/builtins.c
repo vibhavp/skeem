@@ -389,14 +389,19 @@ object_t *eval(object_t *obj)
           goto_top();
           return NULL;
         }
+        env_push();
         cons_t *cur = obj->cell->cdr;
+
         while (cur != NULL) {
           pin(cur->car);
           cur = cur->cdr;
         }
         object_t *val = apply(obj->cell->car, obj->cell->cdr);
+
         for (int i = 0; i < length(obj->cell->cdr); i++)
           unpin_head();
+
+        env_pop();
         return val;
       case SYMBOL:
         return eval(env_lookup(obj));
@@ -442,6 +447,27 @@ void builtins_init()
     builtins[index]->type = PREDICATE;
     builtins[index]->predicate = i;
   }
+
+  CONST_TRUE = malloc(sizeof(object_t));
+  if (CONST_TRUE == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+  CONST_TRUE->type = BOOLEAN;
+  CONST_TRUE->boolean = true;
+
+  CONST_FALSE = malloc(sizeof(object_t));
+  if (CONST_FALSE == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+
+  EMPTY_LIST = malloc(sizeof(object_t));
+  if (EMPTY_LIST == NULL) {
+    perror("malloc");
+    exit(EXIT_FAILURE);
+  }
+
 #ifdef DEBUG
   printf("Initialised builtins\n");
 #endif
