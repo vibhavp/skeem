@@ -22,7 +22,7 @@
 
 #ifndef MEM_H
 #define MEM_H
-
+#include <stdbool.h>
 #include "types.h"
 #include "env.h"
 
@@ -34,8 +34,9 @@ extern void gc();
 extern void heap_init();
 extern void pin(object_t *obj);
 extern void unpin_head();
-
 extern void print_heap();
 extern void print_pinned();
+
+bool no_gc;
 
 #endif
