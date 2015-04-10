@@ -50,5 +50,6 @@ jmp_buf err;
 object_t *builtins[26];
 object_t *CONST_TRUE;
 object_t *CONST_FALSE;
+object_t *EMPTY_LIST;
 
 #endif
