@@ -41,9 +41,6 @@ typedef enum types {
   ENVIRONMENT
 } type_t;
 
-#define LPAREN BUILTIN+1
-#define RPAREN BUILTIN+2
-
 typedef enum {
   AND,
   CAR,
