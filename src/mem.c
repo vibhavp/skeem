@@ -282,6 +282,9 @@ void gc()
 #ifdef DEBUG
   printf("Started GC cycle\n");
 #endif
+  if (no_gc)
+    return;
+  
   mark_all();
   sweep();
 }
