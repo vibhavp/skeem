@@ -32,6 +32,9 @@ struct obj_list {
   struct obj_list *prev;
 };
 
+
+static unsigned int max_obj, num_obj;
+
 /*Stores all allocated objects. Used by sweep()*/
 static struct obj_list *heap = NULL, *heap_head = NULL;
 
@@ -156,6 +159,9 @@ void cons_free(cons_t *cell)
 
 object_t *obj_init(type_t type)
 {
+  if (num_obj == max_obj)
+    gc();
+  
   object_t *obj;
   if ((obj = malloc(sizeof(object_t))) == NULL) {
     perror("malloc");
@@ -178,6 +184,7 @@ object_t *obj_init(type_t type)
 #ifdef DEBUG
   printf("Allocated object type %s\n", strtype(type));
 #endif
+  num_obj++;
   return obj;
 }
 
@@ -269,6 +276,7 @@ void sweep()
         free(curr);
         curr = heap;
       }
+      num_obj--;
     }
     else {
       prev = curr;
@@ -287,6 +295,7 @@ void gc()
   
   mark_all();
   sweep();
+  max_obj = num_obj * 2;
 }
 
 
