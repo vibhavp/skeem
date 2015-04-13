@@ -20,7 +20,6 @@
  *
  */
 
-#include "grammar.h"
 #include "builtins.h"
 #include "env.h"
 #include "mem.h"
@@ -106,51 +105,4 @@ char *strpred(predicate_t pred)
     default: /*LAMBDA_P*/
       return "lambda?";
   }
-}
-
-/* Convert the array of tokens to a cons cell, start evaluating at index.
- * index is updated to the index of the token at the end of the sexp.
- */
-cons_t *tok_to_cons(char **tokens, char *types, int *index)
-{
-  cons_t *cell = cons_init(), *head = cell;
-
-  while(types[*index] != RPAREN) {
-    object_t *obj = obj_init(0);
-    switch(types[*index]) {
-      case INTEGER:
-        obj->integer = atoi(tokens[*index]);
-        break;
-      case FLOAT:
-        obj->flt = atof(tokens[*index]);
-        break;
-      case SYMBOL:
-        obj->string = strdup(tokens[*index]);
-        break;
-      case LPAREN:
-        /* Entering a nested list */
-        /* For refernce, (a . (b . ((c . (d . nil)) . nil))) = (a b (c d))
-         * docs/nested describes how we represent nested list.
-         */
-        obj->type = LIST;
-        *index += 1;
-        obj->cell = tok_to_cons(tokens, types, index);
-        break;
-      case STRING:
-        obj->string = strdup(tokens[*index]);
-        break;
-    }
-    obj->type = types[*index];
-    head->car = obj;
-    if (types[*index+1] != RPAREN) {
-      head->cdr = cons_init();
-      head = head->cdr;
-    }
-    else {
-      head->cdr = NULL;
-    }
-    *index = *index + 1;
-  }
-  /* Reached last element of current cons cell */
-  return cell;
 }
