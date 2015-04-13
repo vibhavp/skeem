@@ -381,14 +381,17 @@ object_t *apply(object_t *function, cons_t *args)
 /* Evaluate object */
 object_t *eval(object_t *obj)
 {
+  no_gc = true;
+
+  if (setjmp(err)) {
+    /*Encountered error*/
+    goto_top();
+    return NULL;
+  }
+
     switch (obj->type)
     {
       case LIST:
-        if (setjmp(err)) {
-          /*Encountered error*/
-          goto_top();
-          return NULL;
-        }
         env_push();
         cons_t *cur = obj->cell->cdr;
 
@@ -424,8 +427,20 @@ void builtins_init()
     builtins[i]->builtin = i;
   }
 
-  for (operator_t i = ADD; i <= MULTIPLY; i++) {
+  for(predicate_t i = INTEGER_P; i <= EQUAL_P; i++) {
     int index = QUOTE+i+1;
+
+    builtins[index] = malloc(sizeof(object_t));
+    if (builtins[index] == NULL) {
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
+    builtins[index]->type = PREDICATE;
+    builtins[index]->predicate = i;
+  }
+
+  for (operator_t i = ADD; i <= MULTIPLY; i++) {
+    int index = EQUAL_P+i+2;
 
     builtins[index] = malloc(sizeof(object_t));
     if (builtins[index] == NULL) {
@@ -436,17 +451,7 @@ void builtins_init()
     builtins[index]->operator = i;
   }
 
-  for(predicate_t i = INTEGER_P; i <= EQUAL_P; i++) {
-    int index = MULTIPLY+QUOTE+i+2;
 
-    builtins[index] = malloc(sizeof(object_t));
-    if (builtins[index] == NULL) {
-      perror("malloc");
-      exit(EXIT_FAILURE);
-    }
-    builtins[index]->type = PREDICATE;
-    builtins[index]->predicate = i;
-  }
 
   CONST_TRUE = malloc(sizeof(object_t));
   if (CONST_TRUE == NULL) {
