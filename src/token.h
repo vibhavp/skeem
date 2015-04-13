@@ -22,7 +22,7 @@
 
 #ifndef TOKEN_H
 #define TOKEN_H
-#include <stdint.h>
+#include "types.h"
 
 enum tok_type {
   TOK_INT,
@@ -30,7 +30,16 @@ enum tok_type {
   /* TOK_CHAR, */
   TOK_STRING,
   TOK_SYMBOL,
+  TOK_OPERATOR_PLUS,
+  TOK_OPERATOR_MINUS,
+  TOK_OPERATOR_DIVIDE,
+  TOK_OPERATOR_MULTIPLY,
   TOK_PAREN_OPEN,
   TOK_PAREN_CLOSE
 };
+
+unsigned int ntok;
+unsigned int depth;
+
+object_t *tokens_to_obj();
 #endif

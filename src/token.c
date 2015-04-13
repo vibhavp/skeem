@@ -29,6 +29,12 @@
 #include <string.h>
 #include <stdbool.h>
 
+static char *builtin_syms[22] =  {"and", "car", "cdr", "cond", "cons", "define",
+                                  "eval", "lambda", "not", "or", "print", "quote",
+                                  "integer_p", "float_p", "number_p", "string_p",
+                                  "symbol_p", "list_p", "lambda_p", "boolean_p",
+                                  "eqv_p", "equal_p"};
+
 typedef struct _token {
   enum tok_type type;
   union {
@@ -37,7 +43,7 @@ typedef struct _token {
     int64_t integer;
     double flt;
   };
-  
+
   struct _token *next;
 } token_t;
 
@@ -55,8 +61,8 @@ void add_token(enum tok_type type, char *str)
   head_tok->next = malloc(sizeof(token_t));
   head_tok = head_tok->next;
   }
-  
-  if (head_tok->next == NULL) {
+
+  if (head_tok == NULL) {
     perror("malloc");
     exit(EXIT_FAILURE);
   }
@@ -82,56 +88,95 @@ void add_token(enum tok_type type, char *str)
   }
 }
 
-inline bool token_is_list()
+bool token_is_list()
 {
   return head_tok->type == TOK_PAREN_OPEN;
 }
 
 cons_t *token_to_cons(token_t *tok)
 {
-  cons_t *cell = cons_init(), *cur_cell;
-  token_t *cur_tok = tok->next;
-  object_t *obj = token_to_obj(cur_tok);
-  cell->car = obj;
-  cur_cell = cell->cdr;
+  cons_t *cell;
+  object_t *val = token_to_obj(tok->next);
 
-  /*Empty lists are handled by token_to_obj, this function will never get one.*/
-  while (true) {
-    obj = token_to_obj(cur_tok);
-    if (obj == NULL)
-      return cell;
-    cur_cell = cons_init();
-    cur_cell->car = obj;
-  }
+  if (val == NULL)
+    return NULL;
+
+  cell = cons_init();
+  cell->car = val;
+  cell->cdr = token_to_cons(tok->next);
+
+  return cell;
+}
+
+object_t *tokens_to_obj()
+{
+  object_t *val = token_to_obj(tokens);
+  return val;
+}
+
+char *alloc_strcat(char **dest, char *src)
+{
+  *dest = realloc(*dest, (strlen(*dest)+strlen(src))*sizeof(char)+1);
+  strcat(*dest, src);
+
+  return *dest;
 }
 
 object_t *token_to_obj(token_t *tok)
 {
   object_t *obj;
   no_gc = false;
-  
+
   switch (tok->type) {
     case TOK_INT:
       obj = obj_init(INTEGER);
-      obj->integer = head_tok->integer;
-      break;
+      obj->integer = tok->integer;
+      return obj;
     case TOK_FLOAT:
       obj = obj_init(FLOAT);
-      obj->flt = head_tok->flt;
-      break;
+      obj->flt = tok->flt;
+      return obj;
     case TOK_STRING:
       obj = obj_init(STRING);
-      obj->string = head_tok->string;
+      obj->string = tok->string;
+      return obj;
     case TOK_SYMBOL:
+      /*Check if symbol is a builtin*/
+      for (int i = 0; i < 22; i++) {
+        if (strcmp(tok->string, builtin_syms[i]) == 0)
+          return builtins[i];
+      }
+
       obj = obj_init(SYMBOL);
-      obj->string = head_tok->string;
+      obj->string = tok->string;
+      return obj;
     case TOK_PAREN_OPEN:
       if (tok->next->type == TOK_PAREN_CLOSE)
         return EMPTY_LIST;
-      
+      depth++;
       obj = obj_init(LIST);
       obj->cell = token_to_cons(tok);
-    default: /*TOK_PAREN_CLOSE*/
+      return obj;
+    case TOK_PAREN_CLOSE:
+      depth--;
       return NULL;
+    case TOK_OPERATOR_PLUS:
+      return builtins[OPERATOR(ADD)];
+    case TOK_OPERATOR_MINUS:
+      return builtins[OPERATOR(SUBTRACT)];
+    case TOK_OPERATOR_MULTIPLY:
+      return builtins[OPERATOR(DIVIDE)];
+    case TOK_OPERATOR_DIVIDE:
+      return builtins[OPERATOR(DIVIDE)];
   }
+}
+
+object_t *scan(char *str)
+{
+  char *word;
+  for (unsigned long i = 0; i < strlen(str); i++) {
+    if (str[i] == ' ' && str[i] != ' ')
+      
+     
+      }
 }
