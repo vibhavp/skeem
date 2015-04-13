@@ -33,7 +33,7 @@ struct obj_list {
 };
 
 
-static unsigned int max_obj, num_obj;
+static unsigned int max_obj = INIT_GC_THRESHOLD, num_obj;
 
 /*Stores all allocated objects. Used by sweep()*/
 static struct obj_list *heap = NULL, *heap_head = NULL;
@@ -185,6 +185,13 @@ object_t *obj_init(type_t type)
   printf("Allocated object type %s\n", strtype(type));
 #endif
   num_obj++;
+  if (type == ENVIRONMENT) {
+    obj->env = malloc(sizeof(env_t));
+    if (obj->env == NULL) {
+      perror("malloc");
+      exit(EXIT_FAILURE);
+    }
+  }
   return obj;
 }
 

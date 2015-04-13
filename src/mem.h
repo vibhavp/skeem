@@ -39,4 +39,6 @@ extern void print_pinned();
 
 bool no_gc;
 
+#define INIT_GC_THRESHOLD 20
+
 #endif
