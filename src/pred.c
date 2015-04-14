@@ -89,17 +89,10 @@ static bool eqv(object_t *obj1, object_t *obj2)
 }
 
 bool eq_cons(cons_t *cell1, cons_t *cell2) {
-  if (cell1 && cell2) {
-    if (equal(cell1->car, cell2->car))
-      return eq_cons(cell1->cdr, cell2->cdr);
-
-    return false;
-  }
-
-  if (cell1 == NULL && cell2 == NULL)
-    return true;
-  /*Both lists are of unequal length*/
-  return false;
+  if (cell1 && cell2)
+    return equal(cell1->car, cell2->car) && eq_cons(cell1->cdr, cell2->cdr);
+  /*If false returned, both lists are of unequal length*/
+  return cell1 == NULL && cell2 == NULL;
 }
 
 /*Compares lists/strings recursively*/
