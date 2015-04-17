@@ -121,7 +121,7 @@ cons_t *token_to_cons(token_t *tok)
 object_t *token_to_obj(token_t *tok)
 {
   object_t *obj;
-  no_gc = false;
+  no_gc = true;
 
   switch (tok->type) {
     case TOK_INT:
