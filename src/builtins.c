@@ -381,7 +381,7 @@ object_t *apply(object_t *function, cons_t *args)
 /* Evaluate object */
 object_t *eval(object_t *obj)
 {
-  no_gc = true;
+  no_gc = false;
 
   if (setjmp(err)) {
     /*Encountered error*/
