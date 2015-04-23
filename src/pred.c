@@ -88,7 +88,8 @@ static bool eqv(object_t *obj1, object_t *obj2)
   return false;
 }
 
-bool eq_cons(cons_t *cell1, cons_t *cell2) {
+bool eq_cons(cons_t *cell1, cons_t *cell2)
+{
   if (cell1 && cell2)
     return equal(cell1->car, cell2->car) && eq_cons(cell1->cdr, cell2->cdr);
   /*If false returned, both lists are of unequal length*/
