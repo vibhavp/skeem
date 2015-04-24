@@ -23,6 +23,7 @@
 #ifndef MEM_H
 #define MEM_H
 #include <stdbool.h>
+#include <stddef.h>
 #include "types.h"
 #include "env.h"
 
@@ -36,6 +37,13 @@ extern void pin(object_t *obj);
 extern void unpin_head();
 extern void print_heap();
 extern void print_pinned();
+
+#ifdef emalloc
+#define ERR_MALLOC err_malloc
+#endif
+
+extern void *ERR_MALLOC(size_t bytes);
+
 
 bool no_gc;
 

@@ -46,8 +46,6 @@ enum tok_type {
   TOK_OPERATOR_MULTIPLY,
   TOK_PAREN_OPEN,
   TOK_PAREN_CLOSE,
-  TOK_INCOMPLETE,
-  TOK_ERROR
 };
 
 typedef struct _token {
@@ -66,40 +64,83 @@ static token_t *tokens, *head_tok;
 
 object_t *token_to_obj(token_t *tok);
 
-void add_token(enum tok_type type, char *str)
+enum tok_type type(char *word, size_t start)
+{
+  enum tok_type sub;
+
+  switch(word[start]) {
+    case '+':
+      if (word[start+1] != '\0') {
+        sub = type(word, start+1);
+        return sub == TOK_FLOAT || sub == TOK_INT ? sub : TOK_SYMBOL;
+      }
+      return TOK_OPERATOR_PLUS;
+    case '-':
+      if (word[start+1] != '\0') {
+        sub = type(word, start+1);
+          return sub == TOK_FLOAT || sub == TOK_INT ? sub : TOK_SYMBOL;
+      }
+      return TOK_OPERATOR_MINUS;
+    case '*':
+      if (word[start+1] != '\0')
+        return TOK_SYMBOL;
+      return TOK_OPERATOR_MULTIPLY;
+    case'/':
+      if (word[start+1] != '\0')
+        return TOK_SYMBOL;
+      return TOK_OPERATOR_DIVIDE;
+    case '0'...'9':
+      for (size_t i = start; i < strlen(word); i++) {
+
+        if (!(word[i] >= '0' && word[i] <= '9')) {
+          if (word[i] == '.' && type(word, i+1) == TOK_INT)
+            return TOK_FLOAT;
+          return TOK_SYMBOL;
+        }
+      }
+    case '\"':
+      return TOK_STRING;
+    case '(':
+      return TOK_PAREN_OPEN;
+    case ')':
+      return TOK_PAREN_CLOSE;
+    default:
+      return TOK_SYMBOL;
+  }
+}
+
+token_t *str_to_tok(char *word)
+{
+  token_t *tok = ERR_MALLOC(sizeof(token_t));
+  tok->type = type(word, 0);
+
+  switch(tok->type)
+  {
+    case TOK_INT:
+      tok->integer = atoi(word);
+      return tok;
+    case TOK_FLOAT:
+      tok->flt = atof(word);
+      return tok;
+    case TOK_STRING:
+    case TOK_SYMBOL:
+      tok->string = word;
+    case TOK_PAREN_OPEN:
+    case TOK_PAREN_CLOSE:
+      return tok;
+  }
+  return NULL;
+}
+
+void add_token(char *str)
 {
   if (tokens == NULL) {
-    tokens = malloc(sizeof(token_t));
+    tokens = str_to_tok(str);
     head_tok = tokens;
   }
   else {
-    head_tok->next = malloc(sizeof(token_t));
+    head_tok->next = str_to_tok(str);
     head_tok = head_tok->next;
-  }
-
-  if (head_tok == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-
-  head_tok->type = type;
-
-  switch (type) {
-    case TOK_INT:
-      head_tok->integer = atoi(str);
-      break;
-    case TOK_FLOAT:
-      head_tok->flt = atof(str);
-      break;
-    /* case TOK_CHAR: */
-    /*   head_tok->character = str[0]; */
-    /*   break; */
-    case TOK_STRING:
-    case TOK_SYMBOL:
-      head_tok->string = str;
-      break;
-    default:
-      break;
   }
 }
 
@@ -167,89 +208,20 @@ object_t *token_to_obj(token_t *tok)
   }
 }
 
-enum tok_type type(char *word, unsigned long start)
-{
-  enum tok_type sub;
-
-  switch(word[start]) {
-    case '+':
-      if (word[start+1] != '\0') {
-        sub = type(word, start+1);
-        return sub == TOK_FLOAT || sub == TOK_INT ? sub : TOK_SYMBOL;
-      }
-      return TOK_OPERATOR_PLUS;
-    case '-':
-      if (word[start+1] != '\0') {
-        sub = type(word, start+1);  
-          return sub == TOK_FLOAT || sub == TOK_INT ? sub : TOK_SYMBOL;
-      }
-      return TOK_OPERATOR_MINUS;
-    case '*':
-      if (word[start+1] != '\0')
-        return TOK_SYMBOL;
-      return TOK_OPERATOR_MULTIPLY;
-    case'/':
-      if (word[start+1] != '\0')
-        return TOK_SYMBOL;
-      return TOK_OPERATOR_DIVIDE;
-    case '0'...'9':
-      for (unsigned long i = start; i < strlen(word); i++) {
-
-        if (!(word[i] >= '0' && word[i] <= '9')) {
-          if (word[i] == '.' && type(word, i+1) == TOK_INT)
-            return TOK_FLOAT;
-          return TOK_SYMBOL;
-        }
-      }
-    case '\"':
-        if (word[strlen(word)-1] == '"')
-          return TOK_STRING;
-        return TOK_INCOMPLETE;
-    case '(':
-      return TOK_PAREN_OPEN;
-    case ')':
-      return TOK_PAREN_CLOSE;
-    default:
-      return TOK_SYMBOL;
-  }
-}
-
-token_t *str_to_tok(char *word)
-{
-  token_t *tok = malloc(sizeof(token_t));
-  tok->type = type(word, 0);
-
-  switch(tok->type)
-  {
-    case TOK_INT:
-      tok->integer = atoi(word);
-      return tok;
-    case TOK_FLOAT:
-      tok->flt = atof(word);
-      return tok;
-    case TOK_STRING:
-    case TOK_SYMBOL:
-      tok->string = word;
-    case TOK_PAREN_OPEN:
-    case TOK_PAREN_CLOSE:
-      return tok;      
-  }
-  return NULL;
-}
-
-token_t **scan(char *str)
+void scan(char *str, size_t limit)
 {
   char word[100];
-  unsigned long index = 0, tok_size = 0, cur_tok = 0;
+  size_t word_index = 0;
 
-  for (unsigned long i = 0; i < strlen(str); i++) {
-    if (str[i] == ' ' && str[i] != ' ') {
-      tokens = realloc(tokens, sizeof(token_t *)*(++tok_size));
-      if (tokens == NULL) {
-        perror("realloc");
-        exit(EXIT_FAILURE);
-      }
-      
+  for (size_t i = 0; i < limit; i++) {
+    if (str[i] == ' ') {
+      if (str[i-1] == ' ')
+        continue;
+      word[word_index] = '\0';
+      add_token(word);
+      word_index = 0;
     }
+    else
+      word[word_index++] = str[i];
   }
 }

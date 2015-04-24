@@ -41,30 +41,28 @@ static struct obj_list *heap = NULL, *heap_head = NULL;
 /*Pinned objects get marked every GC cycle*/
 static struct obj_list *pinned = NULL, *pin_head = NULL;
 
-void heap_init()
+void *ERR_MALLOC(size_t bytes)
 {
-  heap = malloc(sizeof(struct obj_list));
-  if (heap == NULL) {
+  void *ptr = malloc(bytes);
+
+  if (ptr == NULL) {
     perror("malloc");
     exit(EXIT_FAILURE);
   }
+  return ptr;
+}
+
+void heap_init()
+{
+  heap = ERR_MALLOC(sizeof(struct obj_list));
   heap_head = heap;
 }
 
 void root_env_init()
 {
-  root_env = malloc(sizeof(object_t));
-  if (root_env == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
+  root_env = ERR_MALLOC(sizeof(object_t));
   root_env->type = ENVIRONMENT;
-  root_env->env = malloc(sizeof(env_t));
-
-  if (root_env->env == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
+  root_env->env = ERR_MALLOC(sizeof(env_t));
 
   root_env->env->size = 0;
   root_env->env->prev = NULL;
@@ -74,11 +72,7 @@ void root_env_init()
 
 struct obj_list *obj_list_init()
 {
-  struct obj_list *n = malloc(sizeof(struct obj_list));
-  if (n == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
+  struct obj_list *n = ERR_MALLOC(sizeof(struct obj_list));
   n->next = NULL;
   n->prev = NULL;
   return n;
@@ -86,13 +80,7 @@ struct obj_list *obj_list_init()
 
 binding_t *bind_init()
 {
-  binding_t *bind = malloc(sizeof(binding_t));
-
-  if (bind == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-
+  binding_t *bind = ERR_MALLOC(sizeof(binding_t));
   return bind;
 }
 
@@ -135,11 +123,7 @@ void unpin_head()
 
 cons_t *cons_init()
 {
-  cons_t *cell = NULL;
-  if ((cell = malloc(sizeof(cons_t))) == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
+  cons_t *cell = ERR_MALLOC(sizeof(cons_t));
   cell->car = NULL;
   cell->cdr = NULL;
 
@@ -162,11 +146,7 @@ object_t *obj_init(type_t type)
   if (num_obj == max_obj)
     gc();
   
-  object_t *obj;
-  if ((obj = malloc(sizeof(object_t))) == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
+  object_t *obj = ERR_MALLOC(sizeof(object_t));
   obj->type = type;
   obj->marked = false;
   
@@ -186,11 +166,7 @@ object_t *obj_init(type_t type)
 #endif
   num_obj++;
   if (type == ENVIRONMENT) {
-    obj->env = malloc(sizeof(env_t));
-    if (obj->env == NULL) {
-      perror("malloc");
-      exit(EXIT_FAILURE);
-    }
+    obj->env = ERR_MALLOC(sizeof(env_t));
   }
   return obj;
 }
