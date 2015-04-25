@@ -23,9 +23,10 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 #include "types.h"
+#include <stddef.h>
 
 unsigned int ntok;
 unsigned int depth;
 
-object_t *tokens_to_obj();
+void scan(char *str, size_t limit);
 #endif
