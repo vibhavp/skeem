@@ -418,11 +418,7 @@ object_t *eval(object_t *obj)
 void builtins_init()
 {
   for (builtin_t i = AND; i <= QUOTE; i++) {
-    builtins[i] = malloc(sizeof(object_t));
-    if (builtins[i] == NULL) {
-      perror("malloc");
-      exit(EXIT_FAILURE);
-    }
+    builtins[i] = ERR_MALLOC(sizeof(object_t));
     builtins[i]->type = BUILTIN;
     builtins[i]->builtin = i;
   }
@@ -430,11 +426,7 @@ void builtins_init()
   for(predicate_t i = INTEGER_P; i <= EQUAL_P; i++) {
     int index = QUOTE+i+1;
 
-    builtins[index] = malloc(sizeof(object_t));
-    if (builtins[index] == NULL) {
-      perror("malloc");
-      exit(EXIT_FAILURE);
-    }
+    builtins[index] = ERR_MALLOC(sizeof(object_t));
     builtins[index]->type = PREDICATE;
     builtins[index]->predicate = i;
   }
@@ -442,32 +434,19 @@ void builtins_init()
   for (operator_t i = ADD; i <= MULTIPLY; i++) {
     int index = EQUAL_P+i+2;
 
-    builtins[index] = malloc(sizeof(object_t));
-    if (builtins[index] == NULL) {
-      perror("malloc");
-      exit(EXIT_FAILURE);
-    }
+    builtins[index] = ERR_MALLOC(sizeof(object_t));
     builtins[index]->type = OPERATOR;
     builtins[index]->operator = i;
   }
 
 
 
-  CONST_TRUE = malloc(sizeof(object_t));
-  if (CONST_TRUE == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
+  CONST_TRUE = ERR_MALLOC(sizeof(object_t));
   CONST_TRUE->type = BOOLEAN;
   CONST_TRUE->boolean = true;
 
-  CONST_FALSE = malloc(sizeof(object_t));
-  if (CONST_FALSE == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
-
-  EMPTY_LIST = malloc(sizeof(object_t));
+  CONST_FALSE = ERR_MALLOC(sizeof(object_t));
+  EMPTY_LIST = ERR_MALLOC(sizeof(object_t));
   if (EMPTY_LIST == NULL) {
     perror("malloc");
     exit(EXIT_FAILURE);
