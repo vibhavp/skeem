@@ -41,6 +41,9 @@ static struct obj_list *heap = NULL, *heap_head = NULL;
 /*Pinned objects get marked every GC cycle*/
 static struct obj_list *pinned = NULL, *pin_head = NULL;
 
+#ifdef __GUNC__
+__attribute__((returns_nonull))
+#endif
 void *ERR_MALLOC(size_t bytes)
 {
   void *ptr = malloc(bytes);
@@ -164,7 +167,7 @@ object_t *obj_init(type_t type)
 #ifdef DEBUG
   printf("Allocated object type %s\n", strtype(type));
 #endif
-  num_obj++;
+  num_obj += no_gc;
   if (type == ENVIRONMENT) {
     obj->env = ERR_MALLOC(sizeof(env_t));
   }
@@ -273,8 +276,6 @@ void gc()
 #ifdef DEBUG
   printf("Started GC cycle\n");
 #endif
-  if (no_gc)
-    return;
   
   mark_all();
   sweep();
