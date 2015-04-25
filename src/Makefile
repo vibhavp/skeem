@@ -1,6 +1,6 @@
-FLAGS = -std=gnu11 -O2 $(CFLAGS)
+FLAGS = -std=gnu11 $(CFLAGS)
 CC = gcc
-OBJS = builtins.o env.o mem.o pred.o types.o
+OBJS = builtins.o env.o mem.o pred.o types.o token.o
 
 all: skeem
 
@@ -27,6 +27,9 @@ pred.o: pred.c
 
 types.o: types.c
 	$(CC) $(FLAGS) -c types.c
+
+token.o: token.c
+	$(CC) $(FLAGS) -c token.c
 
 clean:
 	rm *.o
