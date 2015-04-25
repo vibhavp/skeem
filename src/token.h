@@ -28,5 +28,5 @@
 unsigned int ntok;
 unsigned int depth;
 
-void scan(char *str, size_t limit);
+extern void scan(char *str, size_t limit);
 #endif
