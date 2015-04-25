@@ -1,0 +1,6 @@
+*.o
+GPATH
+GRTAGS
+*TAGS
+*.out
+skeem
