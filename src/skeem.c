@@ -28,14 +28,40 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#define SKEEM_VERSION "1.0a"
 bool balanced(char *form)
 {
-  unsigned int 
+  unsigned int commas = 0, paren = 0;
+
+  while (*form) {
+    switch(*form++)
+    {
+      case '\"':
+        commas++;
+        break;
+      case '(':
+        paren++;
+        break;
+      case ')':
+        paren--;
+        break;
+    }
+  }
+
+  return (commas % 2 == 0) && (paren == 0); 
 }
 
 int main(int argc, char **argv)
 {
+  char *input = NULL;
+  size_t n = 0;
+
+  printf("skeem version %s\n", SKEEM_VERSION);
   root_env_init();
   builtins_init();
-  char *input = NULL;
+  printf("skeem> ");
+  getline(&input, &n, stdin);
+  scan(input, strlen(input));
+
+  return 0;
 }
