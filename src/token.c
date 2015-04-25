@@ -29,11 +29,11 @@
 #include <string.h>
 #include <stdbool.h>
 
-static char *builtin_syms[22] =  {"and", "car", "cdr", "cond", "cons", "define",
-                                  "eval", "lambda", "not", "or", "print", "quote",
-                                  "integer_p", "float_p", "number_p", "string_p",
-                                  "symbol_p", "list_p", "lambda_p", "boolean_p",
-                                  "eqv_p", "equal_p"};
+static const char *builtin_syms[22] =  {"and", "car", "cdr", "cond", "cons", "define",
+                                        "eval", "lambda", "not", "or", "print", "quote",
+                                        "integer_p", "float_p", "number_p", "string_p",
+                                        "symbol_p", "list_p", "lambda_p", "boolean_p",
+                                        "eqv_p", "equal_p"};
 enum tok_type {
   TOK_INT,
   TOK_FLOAT,
@@ -98,6 +98,7 @@ enum tok_type type(char *word, size_t start)
           return TOK_SYMBOL;
         }
       }
+      return TOK_INT;
     case '\"':
       return TOK_STRING;
     case '(':
@@ -123,8 +124,16 @@ token_t *str_to_tok(char *word)
       tok->flt = atof(word);
       return tok;
     case TOK_STRING:
+      {
+      /*Subtract 2 for the commas*/
+        size_t size = (strlen(word) - 2)*sizeof(char);
+        tok->string = malloc(size);
+        strncpy(tok->string, word+1, size);
+      }
+      return tok;
     case TOK_SYMBOL:
       tok->string = word;
+      return tok;
     case TOK_PAREN_OPEN:
     case TOK_PAREN_CLOSE:
       return tok;
@@ -214,14 +223,27 @@ void scan(char *str, size_t limit)
   size_t word_index = 0;
 
   for (size_t i = 0; i < limit; i++) {
-    if (str[i] == ' ') {
-      if (str[i-1] == ' ')
+    switch(str[i]) {
+      case ' ':
+        if (str[i-1] == ' ')
+          continue;
+        word[word_index] = '\0';
+        add_token(word);
+        word_index = 0;
         continue;
-      word[word_index] = '\0';
-      add_token(word);
-      word_index = 0;
+      case '(':
+        add_token("(");
+        continue;
+      case ')':
+        if (str[i-1] != ' ') {
+          word[word_index] = '\0';
+          add_token(word);
+          word_index = 0;
+        }
+        add_token(")");
+        continue;
+      default:
+        word[word_index++] = str[i];
     }
-    else
-      word[word_index++] = str[i];
   }
 }
