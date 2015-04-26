@@ -43,6 +43,9 @@ extern object_t *divide(object_t *n1, object_t *n2);
 extern object_t *multiply(object_t *n1, object_t *n2);
 extern object_t *cons(object_t *car, object_t *cdr);
 extern void builtins_init();
+extern bool equal(object_t *obj1, object_t *obj2);
+extern bool eqv(object_t *obj1, object_t *obj2);
+
 
 /*Used for error handling*/
 jmp_buf err;
