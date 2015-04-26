@@ -29,4 +29,5 @@ unsigned int ntok;
 unsigned int depth;
 
 extern void scan(char *str, size_t limit);
+extern object_t *tokens_to_obj();
 #endif
