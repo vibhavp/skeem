@@ -25,6 +25,19 @@
 #include "types.h"
 #include <setjmp.h>
 
+#define OPERATOR(o) ((o)+QUOTE)
+#define PREDICATE(p) ((p)+MULTIPLY+QUOTE+2)
+#define _INTEGER_P(n)  ((n)->type == INTEGER)
+#define _FLOAT_P(n)    ((n)->type == FLOAT)
+#define _NUMBER_P(n)   (_INTEGER_P((n)) || _FLOAT_P((n)))
+#define _STRING_P(n)   ((n)->type == STRING)
+#define _SYMBOL_P(n)   ((n)->type == SYMBOL)
+#define _LIST_P(n)     ((n)->type == LIST)
+#define _LAMBDA_P(n)   (_LIST_P((n))                            \
+                        && (n)->cell->car->type == BUILTIN      \
+                        && (n)->cell->car->builtin == LAMBDA)
+#define _BOOLEAN_P(n) ((n)->type == BOOLEAN)
+
 extern object_t *add(object_t *n1, object_t *n2);
 extern object_t *subtract(object_t *n1, object_t *n2);
 extern object_t *cond(cons_t *clauses);
@@ -45,13 +58,10 @@ extern object_t *cons(object_t *car, object_t *cdr);
 extern void builtins_init();
 extern bool equal(object_t *obj1, object_t *obj2);
 extern bool eqv(object_t *obj1, object_t *obj2);
-
+extern object_t *call_predicate(cons_t *obj, predicate_t pred);
 
 /*Used for error handling*/
 jmp_buf err;
-
-#define OPERATOR(o) ((o)+QUOTE)
-#define PREDICATE(p) ((p)+MULTIPLY+QUOTE+2)
 
 object_t *builtins[26];
 object_t *CONST_TRUE;
