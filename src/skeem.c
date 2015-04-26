@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <setjmp.h>
 
 #define SKEEM_VERSION "1.0a"
 bool balanced(char *form)
@@ -48,9 +49,10 @@ bool balanced(char *form)
     }
   }
 
-  return (commas % 2 == 0) && (paren == 0); 
+  return (commas % 2 == 0) && (paren == 0);
 }
 
+jmp_buf err;
 int main(int argc, char **argv)
 {
   char *input = NULL;
@@ -59,10 +61,17 @@ int main(int argc, char **argv)
   printf("skeem version %s\n", SKEEM_VERSION);
   root_env_init();
   builtins_init();
-  printf("skeem> ");
-  getline(&input, &n, stdin);
-  scan(input, strlen(input));
-  print_obj(eval(tokens_to_obj()), stdout);
-  puts("\n");
+
+  while (true) {
+    printf("skeem> ");
+    if (setjmp(err))
+      continue;
+    
+    getline(&input, &n, stdin);
+    scan(input, strlen(input));
+    print_obj(eval(tokens_to_obj()), stdout);
+    puts("\n");
+  }
+
   return 0;
 }
