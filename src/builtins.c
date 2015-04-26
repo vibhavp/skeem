@@ -257,7 +257,6 @@ static object_t *call_operator(operator_t op, cons_t *args)
   }
 }
 
-
 #define BOOL_TO_OBJ(predicate) ((predicate) ? CONST_TRUE : CONST_FALSE)
 
 object_t *call_predicate(cons_t *obj, predicate_t pred)
