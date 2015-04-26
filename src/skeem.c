@@ -62,6 +62,7 @@ int main(int argc, char **argv)
   printf("skeem> ");
   getline(&input, &n, stdin);
   scan(input, strlen(input));
-
+  print_obj(eval(tokens_to_obj()), stdout);
+  puts("\n");
   return 0;
 }
