@@ -26,7 +26,6 @@
 #include <setjmp.h>
 #include "types.h"
 #include "mem.h"
-#include "env.h"
 #include "pred.h"
 #include "builtins.h"
 
