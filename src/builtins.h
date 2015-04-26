@@ -60,9 +60,6 @@ extern bool equal(object_t *obj1, object_t *obj2);
 extern bool eqv(object_t *obj1, object_t *obj2);
 extern object_t *call_predicate(cons_t *obj, predicate_t pred);
 
-/*Used for error handling*/
-jmp_buf err;
-
 object_t *builtins[26];
 object_t *CONST_TRUE;
 object_t *CONST_FALSE;
