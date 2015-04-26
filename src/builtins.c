@@ -358,7 +358,7 @@ object_t *apply(object_t *function, cons_t *args)
         /*The lambda's body */
         cons_t *body = function->cell->cdr->cdr->car->cell;
 
-        correct_number_args(repr(function), length(parameters), args);
+        correct_number_args("lambda", length(parameters), args);
 
         while (parameters != NULL) {
           env_insert(parameters->car, args_head->car);
@@ -373,7 +373,8 @@ object_t *apply(object_t *function, cons_t *args)
         return eval(body->car);
       }
     default:
-      fprintf(stderr, "Invalid Function: %s.", repr(function));
+      fprintf(stderr, "Invalid Function: ");
+      print_obj(function, stderr);
       longjmp(err, 1);
   }
 }
