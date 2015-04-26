@@ -167,7 +167,7 @@ object_t *obj_init(type_t type)
 #ifdef DEBUG
   printf("Allocated object type %s\n", strtype(type));
 #endif
-  num_obj += no_gc;
+  num_obj += !no_gc;
   if (type == ENVIRONMENT) {
     obj->env = ERR_MALLOC(sizeof(env_t));
   }
