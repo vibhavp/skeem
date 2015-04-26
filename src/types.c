@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <setjmp.h>
+#include <math.h>
 #include "types.h"
 
 char *strtype(type_t type)
@@ -81,9 +82,31 @@ char *strop(operator_t op)
   }
 }
 
-char *repr(object_t *obj)
+void print_obj(object_t *obj, FILE *stream)
 {
-  return NULL;
+  switch(obj->type)
+  {
+    case INTEGER:
+      fprintf(stream, "%ld", obj->integer);
+      break;
+    case FLOAT:
+      fprintf(stream, "%f", obj->flt);
+      break;
+    case CHAR:
+      fprintf(stream, "%c", obj->character);
+      break;
+    case STRING:
+      fprintf(stream, "\"%s\"", obj->string);
+      break;
+    case SYMBOL:
+      fprintf(stream, "%s", obj->string);
+      break;
+    case BOOLEAN:
+      fprintf(stream, obj->boolean ? "true" : "false");
+      break;
+    default:
+      fprintf(stream, "builtin");
+  }
 }
 
 char *strpred(predicate_t pred)

@@ -22,6 +22,7 @@
 
 #ifndef TYPES_H
 #define TYPES_H
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "env.h"
@@ -111,5 +112,6 @@ extern char *strop(operator_t op);
 extern int length(cons_t *list);
 extern char *strtype(type_t type);
 extern char *repr(object_t *obj);
+extern void print_obj(object_t *obj, FILE *stream);
 
 #endif
