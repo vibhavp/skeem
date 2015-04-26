@@ -28,7 +28,6 @@
 #include "mem.h"
 #include "builtins.h"
 
-
 object_t *add(object_t *n1, object_t *n2)
 {
   object_t *result;
@@ -51,7 +50,7 @@ object_t *add(object_t *n1, object_t *n2)
   }
   else {
     fprintf(stderr, "add: Wrong argument type(s).");
-    longjmp(err, 1);
+    goto_top();
   }
 
   return result;
@@ -87,7 +86,7 @@ object_t *divide(object_t *n1, object_t *n2)
   }
 
   fprintf(stderr, "divide: Wrong argument type(s)");
-  longjmp(err, 1);
+  goto_top();
 }
 
 object_t *multiply(object_t *n1, object_t *n2)
@@ -112,7 +111,7 @@ object_t *multiply(object_t *n1, object_t *n2)
   }
   else {
     fprintf(stderr, "add: Wrong argument type(s).");
-    longjmp(err, 1);
+    goto_top();
   }
 
   return result;
@@ -164,7 +163,7 @@ object_t *print(object_t *obj)
       break;
     default:
       fprintf(stderr, "Type %s isn't printable.\n", strtype(obj->type));
-      longjmp(err, -1);
+      goto_top();
   }
 
   return obj;
@@ -202,7 +201,7 @@ object_t *cond(cons_t *clauses)
     if (IS_FALSE(val)) {
       if (clause->cdr == NULL) {
         fprintf(stderr, "No consequent for clause %d", clause_no);
-        longjmp(err, 1);
+        goto_top();
       }
       return eval(clause->cdr->car);
     }
@@ -211,7 +210,7 @@ object_t *cond(cons_t *clauses)
 
   /*None of conditions are true*/
   fprintf(stderr, "None of the conditions in cond expression are true.");
-  longjmp(err, 1);
+  goto_top();
 }
 
 object_t *cdr(object_t *cell)
@@ -232,7 +231,7 @@ object_t *define(object_t *sym, object_t *val)
     env_insert(sym, val);
   else {
     fprintf(stderr, "Wrong argument type - %s (needed symbol)", strtype(sym->type));
-    longjmp(err, 1);
+    goto_top();
   }
 
   return val;
@@ -350,7 +349,7 @@ static void correct_number_args(char *function, int params_no,
     fprintf(stderr,
             "Wrong number of arguments to %s - %d. (Wanted %d)",
             function, len, params_no);
-    longjmp(err, 1);
+    goto_top();
   }
 }
 
@@ -454,45 +453,38 @@ object_t *apply(object_t *function, cons_t *args)
       }
     default:
       fprintf(stderr, "Invalid Function: ");
-      print_obj(function, stderr);
-      longjmp(err, 1);
+      /* print_obj(function, stderr); */
+      goto_top();
   }
 }
 
 /* Evaluate object */
 object_t *eval(object_t *obj)
 {
-  no_gc = false;
-
-  if (setjmp(err)) {
-    /*Encountered error*/
-    goto_top();
-    return NULL;
+  no_gc = false; 
+  switch (obj->type)
+  {
+    case LIST:
+      env_push();
+      cons_t *cur = obj->cell->cdr;
+      
+      while (cur != NULL) {
+        pin(cur->car);
+        cur = cur->cdr;
+      }
+      object_t *val = apply(obj->cell->car, obj->cell->cdr);
+        
+      for (int i = 0; i < length(obj->cell->cdr); i++)
+        unpin_head();
+        
+      env_pop();
+      return val;
+    case SYMBOL:
+      return eval(env_lookup(obj));
+        
+    default:
+      return obj;
   }
-
-    switch (obj->type)
-    {
-      case LIST:
-        env_push();
-        cons_t *cur = obj->cell->cdr;
-
-        while (cur != NULL) {
-          pin(cur->car);
-          cur = cur->cdr;
-        }
-        object_t *val = apply(obj->cell->car, obj->cell->cdr);
-
-        for (int i = 0; i < length(obj->cell->cdr); i++)
-          unpin_head();
-
-        env_pop();
-        return val;
-      case SYMBOL:
-        return eval(env_lookup(obj));
-
-      default:
-        return obj;
-    }
 }
 
 /*Initialize all builtins, including procedures, predicates, and operators*/
