@@ -47,7 +47,7 @@ extern void builtins_init();
 /*Used for error handling*/
 jmp_buf err;
 
-#define OPERATOR(o) ((o)+QUOTE+1)
+#define OPERATOR(o) ((o)+QUOTE)
 #define PREDICATE(p) ((p)+MULTIPLY+QUOTE+2)
 
 object_t *builtins[26];
