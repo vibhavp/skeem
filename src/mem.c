@@ -21,7 +21,6 @@
  */
 
 #include "mem.h"
-#include "env.h"
 #include "builtins.h"
 #include <stdio.h>
 #include <string.h>
