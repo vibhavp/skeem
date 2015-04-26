@@ -134,8 +134,7 @@ token_t *str_to_tok(char *word)
     case TOK_SYMBOL:
       tok->string = word;
       return tok;
-    case TOK_PAREN_OPEN:
-    case TOK_PAREN_CLOSE:
+    default:
       return tok;
   }
   return NULL;
@@ -164,6 +163,8 @@ cons_t *token_to_cons(token_t *tok)
   cell = cons_init();
   cell->car = val;
   cell->cdr = token_to_cons(tok->next);
+  if (cell->cdr == NULL)
+    free(cell->cdr);
 
   return cell;
 }
@@ -215,6 +216,11 @@ object_t *token_to_obj(token_t *tok)
     case TOK_OPERATOR_DIVIDE:
       return builtins[OPERATOR(DIVIDE)];
   }
+}
+
+object_t *tokens_to_obj()
+{
+  return token_to_obj(tokens);
 }
 
 void scan(char *str, size_t limit)
