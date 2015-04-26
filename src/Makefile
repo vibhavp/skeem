@@ -1,5 +1,5 @@
 FLAGS = -std=gnu11 $(CFLAGS)
-CC = gcc
+CC = cc
 OBJS = builtins.o env.o mem.o pred.o types.o token.o
 
 all: skeem
