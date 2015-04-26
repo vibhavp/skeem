@@ -1,6 +1,6 @@
 FLAGS = -std=gnu11 $(BUILDFLAGS) $(CFLAGS)
 CCOMP = $(if $(CC), $(CC), cc)
-OBJS = builtins.o env.o mem.o pred.o types.o token.o
+OBJS = builtins.o mem.o types.o token.o
 
 all: skeem
 
@@ -16,14 +16,8 @@ skeem.o: skeem.c
 builtins.o: builtins.c
 	$(CCOMP) $(FLAGS) -c builtins.c
 
-env.o: env.c
-	$(CCOMP) $(FLAGS) -c env.c
-
 mem.o: mem.c
 	$(CCOMP) $(FLAGS) -c mem.c
-
-pred.o: pred.c
-	$(CCOMP) $(FLAGS) -c pred.c
 
 types.o: types.c
 	$(CCOMP) $(FLAGS) -c types.c
