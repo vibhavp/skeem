@@ -34,7 +34,6 @@ struct obj_list {
   struct obj_list *prev;
 };
 
-
 static unsigned int max_obj = INIT_GC_THRESHOLD, num_obj;
 
 /*Stores all allocated objects. Used by sweep()*/
@@ -349,8 +348,12 @@ void env_pop()
 
 void goto_top()
 {
-  while(env_head->env->prev != NULL)
+  while (env_head->env->prev != NULL)
     env_pop();
+  while (pinned != NULL)
+    unpin_head();
+  
+  longjmp(err, 1);
 }
 
 void env_insert(object_t *sym, object_t *val)
@@ -389,5 +392,5 @@ object_t *env_lookup(object_t *sym)
     }
   }
   fprintf(stderr, "Unbound variable: %s", sym->string);
-  longjmp(err, 1);
+  goto_top();
 }
