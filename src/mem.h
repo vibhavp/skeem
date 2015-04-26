@@ -25,7 +25,24 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "types.h"
-#include "env.h"
+
+bool no_gc;
+
+struct _object_t;
+
+typedef struct bind {
+  struct _object_t *sym;
+  struct _object_t *val;
+} binding_t;
+
+typedef struct env {
+  int size;
+  binding_t **binding;
+  struct _object_t *next;
+  struct _object_t *prev;
+} env_t;
+
+struct _object_t *root_env, *env_head;
 
 extern cons_t *cons_init();
 extern void cons_free(cons_t *cell);
@@ -37,15 +54,18 @@ extern void pin(object_t *obj);
 extern void unpin_head();
 extern void print_heap();
 extern void print_pinned();
+extern void root_env_init();
+extern void env_push();
+extern void env_pop();
+extern void goto_top();
+extern void env_insert(struct _object_t *sym, struct _object_t *val);
+extern struct _object_t *env_lookup(struct _object_t *sym);
 
 #ifdef emalloc
 #define ERR_MALLOC err_malloc
 #endif
-
 extern void *ERR_MALLOC(size_t bytes);
 
-
-bool no_gc;
 
 #define INIT_GC_THRESHOLD 20
 

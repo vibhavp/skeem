@@ -22,7 +22,10 @@
 
 #include "mem.h"
 #include "env.h"
+#include "builtins.h"
 #include <stdio.h>
+#include <string.h>
+#include <setjmp.h>
 #include <stdlib.h>
 
 /*Variables for GC purposes*/
@@ -329,4 +332,63 @@ void print_pinned()
 {
   printf("Pinned objects: \n");
   print_obj_list(pinned);
+}
+
+void env_push()
+{
+  object_t *prev_env = env_head;
+  env_head->env->next = obj_init(ENVIRONMENT);
+  env_head = env_head->env->next;
+  env_head->env->prev = prev_env;
+}
+
+void env_pop()
+{
+  env_head = env_head->env->prev;
+  env_head->env->next = NULL;
+}
+
+void goto_top()
+{
+  while(env_head->env->prev != NULL)
+    env_pop();
+}
+
+void env_insert(object_t *sym, object_t *val)
+{
+  int i;
+  env_t *env = env_head->env;
+  env->binding = realloc(env->binding, sizeof(binding_t) * env->size
+                         + sizeof(binding_t));
+  if (env->binding == NULL) {
+    perror("realloc");
+    exit(EXIT_FAILURE);
+  }
+  /*Check if the symbol is already bound*/
+  for (i = 0; i < env->size; i++) {
+    if (strcmp(env->binding[i]->sym->string, sym->string) == 0) {
+      env->binding[i]->val = val;
+      return;
+    }
+  }
+
+  env->binding[env->size] = malloc(sizeof(binding_t));
+  env->binding[env->size]->sym = sym;
+  env->binding[env->size]->val = val;
+  env->size++;
+}
+
+object_t *env_lookup(object_t *sym)
+{
+  env_t *cur_env = env_head->env;
+
+  while (cur_env != NULL) {
+    int i;
+    for (i = 0; i < cur_env->size; i++) {
+      if (strcmp(cur_env->binding[i]->sym->string, sym->string) == 0)
+        return cur_env->binding[i]->val;
+    }
+  }
+  fprintf(stderr, "Unbound variable: %s", sym->string);
+  longjmp(err, 1);
 }
