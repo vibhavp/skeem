@@ -29,11 +29,12 @@
 #include <string.h>
 #include <stdbool.h>
 
-static const char *builtin_syms[22] =  {"and", "car", "cdr", "cond", "cons", "define",
-                                        "eval", "lambda", "not", "or", "print", "quote",
-                                        "integer_p", "float_p", "number_p", "string_p",
-                                        "symbol_p", "list_p", "lambda_p", "boolean_p",
-                                        "eqv_p", "equal_p"};
+static const char *builtin_syms[22] =  {"and", "car", "cdr", "cond", "cons",
+                                        "define", "eval", "lambda", "not",
+                                        "or", "print", "quote", "integer_p",
+                                        "float_p", "number_p", "string_p",
+                                        "symbol_p", "list_p", "lambda_p",
+                                        "boolean_p", "eqv_p", "equal_p"};
 enum tok_type {
   TOK_INT,
   TOK_FLOAT,
@@ -114,6 +115,7 @@ token_t *str_to_tok(char *word)
 {
   token_t *tok = ERR_MALLOC(sizeof(token_t));
   tok->type = type(word, 0);
+  tok->next = NULL;
 
   switch(tok->type)
   {
@@ -154,17 +156,13 @@ void add_token(char *str)
 
 cons_t *token_to_cons(token_t *tok)
 {
-  cons_t *cell;
-  object_t *val = token_to_obj(tok->next);
+  object_t *obj = token_to_obj(tok->next);
 
-  if (val == NULL)
+  if (obj == NULL)
     return NULL;
-
-  cell = cons_init();
-  cell->car = val;
+  cons_t *cell = cons_init();
+  cell->car = obj;
   cell->cdr = token_to_cons(tok->next);
-  if (cell->cdr == NULL)
-    free(cell->cdr);
 
   return cell;
 }
@@ -200,12 +198,10 @@ object_t *token_to_obj(token_t *tok)
     case TOK_PAREN_OPEN:
       if (tok->next->type == TOK_PAREN_CLOSE)
         return EMPTY_LIST;
-      depth++;
       obj = obj_init(LIST);
       obj->cell = token_to_cons(tok);
       return obj;
     case TOK_PAREN_CLOSE:
-      depth--;
       return NULL;
     case TOK_OPERATOR_PLUS:
       return builtins[OPERATOR(ADD)];
@@ -243,7 +239,8 @@ void scan(char *str, size_t limit)
       case ')':
         if (str[i-1] != ' ') {
           word[word_index] = '\0';
-          add_token(word);
+          if (word[0] != '\0')
+            add_token(word);
           word_index = 0;
         }
         add_token(")");
@@ -252,4 +249,20 @@ void scan(char *str, size_t limit)
         word[word_index++] = str[i];
     }
   }
+}
+
+void clear_tokens()
+{
+  token_t *cur = tokens, *prev;
+
+  while (cur != NULL) {
+#ifdef DEBUG
+    printf("Cleared token\n");
+#endif
+    prev = cur;
+    free(cur);
+    cur = prev->next;
+  }
+  tokens = NULL;
+  head_tok = NULL;
 }
