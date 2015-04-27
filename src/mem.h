@@ -44,7 +44,6 @@ typedef struct env {
 } env_t;
 
 struct _object_t *root_env, *env_head;
-extern jmp_buf err;
 
 extern cons_t *cons_init();
 extern void cons_free(cons_t *cell);

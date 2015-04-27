@@ -346,6 +346,8 @@ void env_pop()
   env_head->env->next = NULL;
 }
 
+extern jmp_buf err;
+__attribute__((noreturn))
 void goto_top()
 {
   while (env_head->env->prev != NULL)

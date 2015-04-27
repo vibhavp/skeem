@@ -347,7 +347,7 @@ static void correct_number_args(char *function, int params_no,
   int len = length(args);
   if (len != params_no) {
     fprintf(stderr,
-            "Wrong number of arguments to %s - %d. (Wanted %d)",
+            "Wrong number of arguments to %s - %d. (Wanted %d)\n",
             function, len, params_no);
     goto_top();
   }
@@ -459,6 +459,7 @@ object_t *apply(object_t *function, cons_t *args)
 }
 
 /* Evaluate object */
+__attribute__((hot))
 object_t *eval(object_t *obj)
 {
   no_gc = false; 
