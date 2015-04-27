@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <setjmp.h>
 
 #define SKEEM_VERSION "1.0a"
@@ -64,13 +65,20 @@ int main(int argc, char **argv)
 
   while (true) {
     printf("skeem> ");
-    if (setjmp(err))
+    if (setjmp(err)) {
+      clear_tokens();
       continue;
+    }
     
     getline(&input, &n, stdin);
     scan(input, strlen(input));
+    
+    puts("=>");
     print_obj(eval(tokens_to_obj()), stdout);
     puts("\n");
+
+    free(input);
+    clear_tokens();
   }
 
   return 0;
