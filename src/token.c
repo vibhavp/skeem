@@ -61,7 +61,7 @@ typedef struct _token {
   struct _token *next;
 } token_t;
 
-static token_t *tokens, *head_tok;
+static token_t *tokens, *head_tok, *list_end;
 
 object_t *token_to_obj(token_t *tok);
 
@@ -162,6 +162,7 @@ cons_t *token_to_cons(token_t *tok)
     return NULL;
   cons_t *cell = cons_init();
   cell->car = obj;
+  tok = obj->type == LIST ? list_end : tok;
   cell->cdr = token_to_cons(tok->next);
 
   return cell;
@@ -202,6 +203,7 @@ object_t *token_to_obj(token_t *tok)
       obj->cell = token_to_cons(tok);
       return obj;
     case TOK_PAREN_CLOSE:
+      list_end = tok;
       return NULL;
     case TOK_OPERATOR_PLUS:
       return builtins[OPERATOR(ADD)];
