@@ -73,9 +73,11 @@ int main(int argc, char **argv)
     getline(&input, &n, stdin);
     scan(input, strlen(input));
     
-    puts("=>");
-    print_obj(eval(tokens_to_obj()), stdout);
-    puts("\n");
+    printf("=>");
+    
+    register object_t *obj = tokens_to_obj();
+    print_obj(eval(obj), stdout);
+    putchar('\n');
 
     free(input);
     clear_tokens();
