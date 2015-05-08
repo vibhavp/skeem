@@ -530,10 +530,6 @@ void builtins_init()
 
   CONST_FALSE = ERR_MALLOC(sizeof(object_t));
   EMPTY_LIST = ERR_MALLOC(sizeof(object_t));
-  if (EMPTY_LIST == NULL) {
-    perror("malloc");
-    exit(EXIT_FAILURE);
-  }
 
 #ifdef DEBUG
   printf("Initialised builtins\n");
