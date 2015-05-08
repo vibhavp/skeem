@@ -79,13 +79,18 @@ object_t *subtract(object_t *n1, object_t *n2)
 object_t *divide(object_t *n1, object_t *n2)
 {
   if (_NUMBER_P(n1) && _NUMBER_P(n2)) {
+    if (NUMBER(n1) == 0 || NUMBER(n2) == 0) {
+      fprintf(stderr, "divide: Division by zero.\n");
+      goto_top();
+    }
+      
     object_t *result = obj_init(FLOAT);
     result->flt = NUMBER(n1) / NUMBER(n2);
 
     return result;
   }
 
-  fprintf(stderr, "divide: Wrong argument type(s)");
+  fprintf(stderr, "divide: Wrong argument type(s)\n");
   goto_top();
 }
 
@@ -259,7 +264,7 @@ static object_t *call_operator(operator_t op, cons_t *args)
 #define BOOL_TO_OBJ(predicate) ((predicate) ? CONST_TRUE : CONST_FALSE)
 
 object_t *call_predicate(cons_t *obj, predicate_t pred)
-{  
+{
   switch(pred)
   {
     case INTEGER_P:
@@ -303,7 +308,7 @@ bool eqv(object_t *obj1, object_t *obj2)
         /*Only returns true if both point to the same _location_, as per R5RS*/
         return obj1->cell == obj2->cell;
       case STRING:
-        return obj1->string == obj2->string; 
+        return obj1->string == obj2->string;
       case BUILTIN:
         return obj1->builtin == obj2->builtin;
       case OPERATOR:
@@ -317,8 +322,12 @@ bool eqv(object_t *obj1, object_t *obj2)
 
 bool eq_cons(cons_t *cell1, cons_t *cell2)
 {
-  if (cell1 && cell2)
-    return equal(cell1->car, cell2->car) && eq_cons(cell1->cdr, cell2->cdr);
+  if (cell1 && cell2) {
+    if (equal(cell1->car, cell2->car)) /*Using && wouldn't result in TCO*/
+      return eq_cons(cell1->cdr, cell2->cdr);
+
+    return false;
+  }
   /*If false returned, both lists are of unequal length*/
   return cell1 == NULL && cell2 == NULL;
 }
@@ -462,27 +471,27 @@ object_t *apply(object_t *function, cons_t *args)
 __attribute__((hot))
 object_t *eval(object_t *obj)
 {
-  no_gc = false; 
+  no_gc = false;
   switch (obj->type)
   {
     case LIST:
       env_push();
       cons_t *cur = obj->cell->cdr;
-      
+
       while (cur != NULL) {
         pin(cur->car);
         cur = cur->cdr;
       }
       object_t *val = apply(obj->cell->car, obj->cell->cdr);
-        
+
       for (int i = 0; i < length(obj->cell->cdr); i++)
         unpin_head();
-        
+
       env_pop();
       return val;
     case SYMBOL:
       return eval(env_lookup(obj));
-        
+
     default:
       return obj;
   }
