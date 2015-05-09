@@ -42,9 +42,6 @@ static struct obj_list *heap = NULL, *heap_head = NULL;
 /*Pinned objects get marked every GC cycle*/
 static struct obj_list *pinned = NULL, *pin_head = NULL;
 
-#ifdef __GUNC__
-__attribute__((returns_nonull))
-#endif
 void *ERR_MALLOC(size_t bytes)
 {
   void *ptr = malloc(bytes);
@@ -145,6 +142,23 @@ void cons_free(cons_t *cell)
   }
 }
 
+/*Initialize the heap, root environment, and pinned list*/
+void init_mem()
+{
+  heap = ERR_MALLOC(sizeof(struct obj_list));
+  heap_head = heap;
+
+  root_env = ERR_MALLOC(sizeof(object_t));
+  root_env->type = ENVIRONMENT;
+  root_env->env = ERR_MALLOC(sizeof(env_t));
+  root_env->env->size = 0;
+  root_env->env->prev = NULL;
+  env_head = root_env;
+
+  pinned = obj_list_init();
+  pin_head = pinned;
+}
+
 object_t *obj_init(type_t type)
 {
   if (num_obj == max_obj)
@@ -223,19 +237,20 @@ void mark_all()
 {
   object_t *cur_env = root_env;
   int i;
-  while (cur_env != NULL) {
-
+  while (cur_env != NULL) { /*Mark all bindings*/  
     for (i = 0; i < cur_env->env->size; i++) {
       mark_symbol(cur_env->env->binding[i]);
     }
     cur_env = cur_env->env->next;
   }
+  
   /*mark all environment objects*/
   object_t *cur = root_env->env->next;
   while (cur != NULL) {
     cur->marked = true;
     cur = cur->env->next;
   }
+  
   /*mark all pinned objects*/
   struct obj_list *cur_pin = pinned;
   while (cur_pin != NULL) {
