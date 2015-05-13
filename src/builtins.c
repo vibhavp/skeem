@@ -368,7 +368,7 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
   switch(builtin) {
     case AND:
       correct_number_args("and", 2, args);
-      return and(eval(args->car), eval(args->cdr->car));
+      return and(args->car, args->cdr->car);
     case CAR:
       correct_number_args("car", 1, args);
       return eval(args->car);
@@ -396,7 +396,7 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
       return not(eval(args->car));
     case OR:
       correct_number_args("or", 2, args);
-      return or(eval(args->car), eval(args->cdr->car));
+      return or(args->car, args->cdr->car);
     case PRINT:
       correct_number_args("print", 1, args);
       return print(eval(args->car));
