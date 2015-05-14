@@ -49,13 +49,11 @@ extern cons_t *cons_init();
 extern void cons_free(cons_t *cell);
 extern object_t *obj_init(type_t type);
 extern void obj_free(object_t *obj);
-extern void gc();
-extern void heap_init();
 extern void pin(object_t *obj);
 extern void unpin_head();
 extern void print_heap();
 extern void print_pinned();
-extern void root_env_init();
+extern void mem_init();
 extern void env_push();
 extern void env_pop();
 extern void goto_top();
@@ -64,6 +62,8 @@ extern struct _object_t *env_lookup(struct _object_t *sym);
 
 #ifdef emalloc
 #define ERR_MALLOC err_malloc
+#else
+#define ERR_MALLOC emalloc
 #endif
 extern void *ERR_MALLOC(size_t bytes);
 
