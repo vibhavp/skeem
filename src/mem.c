@@ -42,6 +42,8 @@ static struct obj_list *heap = NULL, *heap_head = NULL;
 /*Pinned objects get marked every GC cycle*/
 static struct obj_list *pinned = NULL, *pin_head = NULL;
 
+static void gc();
+
 void *ERR_MALLOC(size_t bytes)
 {
   void *ptr = malloc(bytes);
