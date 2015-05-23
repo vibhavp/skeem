@@ -476,18 +476,9 @@ object_t *eval(object_t *obj)
   {
     case LIST:
       env_push();
-      cons_t *cur = obj->cell->cdr;
-
-      while (cur != NULL) {
-        pin(cur->car);
-        cur = cur->cdr;
-      }
       object_t *val = apply(obj->cell->car, obj->cell->cdr);
-
-      for (int i = 0; i < length(obj->cell->cdr); i++)
-        unpin_head();
-
       env_pop();
+
       return val;
     case SYMBOL:
       return eval(env_lookup(obj));
