@@ -34,22 +34,37 @@ struct obj_list {
   struct obj_list *prev;
 };
 
-static unsigned int max_obj = INIT_GC_THRESHOLD, num_obj;
+/*Binary tree for symbol table*/
+struct bind_tree {
+  object_t *symbol;
+  object_t *val;
+  struct bind_tree *root;
+  struct bind_tree *parent;
+  struct bind_tree *left;
+  struct bind_tree *right;
+};
 
+struct env {
+  struct bind_tree *tree;
+  object_t *next;
+  object_t *prev;
+};
+
+object_t *env_global, *env_head;
+
+static unsigned int max_obj = INIT_GC_THRESHOLD, num_obj;
 /*Stores all allocated objects. Used by sweep()*/
 static struct obj_list *heap = NULL, *heap_head = NULL;
-
 /*Pinned objects get marked every GC cycle*/
 static struct obj_list *pinned = NULL, *pin_head = NULL;
-
 static void gc();
 
 void *ERR_MALLOC(size_t bytes)
 {
-  void *ptr = malloc(bytes);
+  void *ptr = calloc(1, bytes);
 
   if (ptr == NULL) {
-    perror("malloc");
+    perror("calloc");
     exit(EXIT_FAILURE);
   }
   return ptr;
@@ -61,19 +76,7 @@ void heap_init()
   heap_head = heap;
 }
 
-void root_env_init()
-{
-  root_env = ERR_MALLOC(sizeof(object_t));
-  root_env->type = ENVIRONMENT;
-  root_env->env = ERR_MALLOC(sizeof(env_t));
-
-  root_env->env->size = 0;
-  root_env->env->prev = NULL;
-
-  env_head = root_env;
-}
-
-struct obj_list *obj_list_init()
+inline struct obj_list *obj_list_init()
 {
   struct obj_list *n = ERR_MALLOC(sizeof(struct obj_list));
   n->next = NULL;
@@ -81,10 +84,62 @@ struct obj_list *obj_list_init()
   return n;
 }
 
-binding_t *bind_init()
+void tree_insert(struct bind_tree *tree, object_t *symbol, object_t *val)
 {
-  binding_t *bind = ERR_MALLOC(sizeof(binding_t));
-  return bind;
+  struct bind_tree *y = NULL, *x = tree;
+
+  while (x != NULL) {
+    y = x;
+    int diff = strcmp(symbol->string, x->symbol->string);
+
+    if (diff < 0)
+      x = x->left;
+    else if (diff > 0)
+      x = x->right;
+    else { /*Symbol already exists*/
+      x->val = val;
+      return;
+    }
+  }
+  struct bind_tree *new = ERR_MALLOC(sizeof(struct bind_tree));
+  new->symbol = symbol;
+  new->val = val;
+  new->parent = y;
+  
+  if (y == NULL) {
+    tree->root = new;
+    return;
+  }
+  else if (strcmp(symbol->string, y->symbol->string) < 0)
+    y->left = new;
+  else
+    y->right = new;
+}
+
+inline void env_insert(object_t *symbol, object_t *val)
+{
+  tree_insert(env_head->env->tree, symbol, val);
+}
+
+object_t *tree_lookup(struct bind_tree *tree, object_t *symbol)
+{
+  int diff = strcmp(symbol->string, tree->symbol->string);
+  
+  while (tree != NULL && diff != 0) {
+    if (diff < 0)
+      tree = tree->left;
+    else
+      tree = tree->right;
+    
+    diff = strcmp(symbol->string, tree->symbol->string);
+  }
+
+  return tree == NULL ? NULL : tree->val;
+}
+
+inline object_t *env_lookup(object_t *symbol)
+{
+  return tree_lookup(env_head->env->tree, symbol);
 }
 
 void pin(object_t *obj)
@@ -145,57 +200,66 @@ void cons_free(cons_t *cell)
 }
 
 /*Initialize the heap, root environment, and pinned list*/
-void init_mem()
+void mem_init()
 {
   heap = ERR_MALLOC(sizeof(struct obj_list));
   heap_head = heap;
 
-  root_env = ERR_MALLOC(sizeof(object_t));
-  root_env->type = ENVIRONMENT;
-  root_env->env = ERR_MALLOC(sizeof(env_t));
-  root_env->env->size = 0;
-  root_env->env->prev = NULL;
-  env_head = root_env;
-
+  env_global = ERR_MALLOC(sizeof(struct env));
+  env_head = env_global;
+  env_head->env->tree = ERR_MALLOC(sizeof(struct bind_tree));
+  
   pinned = obj_list_init();
   pin_head = pinned;
 }
 
 object_t *obj_init(type_t type)
 {
-  if (num_obj == max_obj)
+  if (num_obj == max_obj && !no_gc)
     gc();
   
   object_t *obj = ERR_MALLOC(sizeof(object_t));
   obj->type = type;
   obj->marked = false;
-  
-  /*if heap_head->val == NULL, this is the first object in the heap*/
-  if (heap_head != NULL) {
-    heap_head->next = obj_list_init();
-    heap_head->next->prev = heap_head;
-    heap_head = heap_head->next;
+
+  if (type == SYMBOL){
+    num_obj += 1;
+    return obj;
   }
-
-  else
-    heap_init();
-
+  
   heap_head->val = obj;
+  heap_head->next = obj_list_init();
+  heap_head->next->prev = heap_head;
+  heap_head = heap_head->next;
+  
 #ifdef DEBUG
   printf("Allocated object type %s\n", strtype(type));
 #endif
-  num_obj += !no_gc;
+  
   if (type == ENVIRONMENT) {
-    obj->env = ERR_MALLOC(sizeof(env_t));
+    obj->env = ERR_MALLOC(sizeof(struct env));
   }
+  num_obj += 1;
   return obj;
+}
+
+void bind_tree_free(struct bind_tree *tree)
+{
+  if (tree != NULL)
+  {
+    bind_tree_free(tree->left);
+    struct bind_tree *right = tree->right;
+    free(tree);
+    free(tree->symbol);
+    bind_tree_free(right);
+  }
 }
 
 void obj_free(object_t *obj)
 {
   switch(obj->type) {
     case ENVIRONMENT:
-      free(obj->env->binding);
+      bind_tree_free(obj->env->tree);
       break;
     case STRING:
     case SYMBOL:
@@ -209,7 +273,6 @@ void obj_free(object_t *obj)
   }
   free(obj);
 }
-
 
 void mark(object_t *obj)
 {
@@ -229,30 +292,26 @@ void mark(object_t *obj)
   }
 }
 
-static inline void mark_symbol(binding_t *sym)
+
+void mark_bind_tree(struct bind_tree *tree)
 {
-  mark(sym->sym);
-  mark(sym->val);
+  if (tree != NULL) {
+    mark_bind_tree(tree->left);
+    mark(tree->symbol);
+    mark(tree->val);
+    mark_bind_tree(tree->right);
+  }
 }
 
 void mark_all()
 {
-  object_t *cur_env = root_env;
-  int i;
-  while (cur_env != NULL) { /*Mark all bindings*/  
-    for (i = 0; i < cur_env->env->size; i++) {
-      mark_symbol(cur_env->env->binding[i]);
-    }
-    cur_env = cur_env->env->next;
-  }
-  
-  /*mark all environment objects*/
-  object_t *cur = root_env->env->next;
+  struct env *cur = env_global->env;
+
   while (cur != NULL) {
-    cur->marked = true;
-    cur = cur->env->next;
+    mark_bind_tree(cur->tree);
+    cur = cur->next->env;
   }
-  
+
   /*mark all pinned objects*/
   struct obj_list *cur_pin = pinned;
   while (cur_pin != NULL) {
@@ -299,8 +358,6 @@ void gc()
   sweep();
   max_obj = num_obj * 2;
 }
-
-
 
 void print_obj_list(struct obj_list *list)
 {
@@ -351,65 +408,25 @@ void print_pinned()
 
 void env_push()
 {
-  object_t *prev_env = env_head;
   env_head->env->next = obj_init(ENVIRONMENT);
   env_head = env_head->env->next;
-  env_head->env->prev = prev_env;
 }
 
-void env_pop()
+inline void env_pop()
 {
   env_head = env_head->env->prev;
+  free(env_head->env->next);
   env_head->env->next = NULL;
 }
 
 extern jmp_buf err;
-_Noreturn
-void goto_top()
+
+_Noreturn void goto_top()
 {
-  while (env_head->env->prev != NULL)
+  while (env_head->env->next != NULL)
     env_pop();
   while (pinned != NULL)
     unpin_head();
   
   longjmp(err, 1);
-}
-
-void env_insert(object_t *sym, object_t *val)
-{
-  int i;
-  env_t *env = env_head->env;
-  env->binding = realloc(env->binding, sizeof(binding_t) * env->size
-                         + sizeof(binding_t));
-  if (env->binding == NULL) {
-    perror("realloc");
-    exit(EXIT_FAILURE);
-  }
-  /*Check if the symbol is already bound*/
-  for (i = 0; i < env->size; i++) {
-    if (strcmp(env->binding[i]->sym->string, sym->string) == 0) {
-      env->binding[i]->val = val;
-      return;
-    }
-  }
-
-  env->binding[env->size] = malloc(sizeof(binding_t));
-  env->binding[env->size]->sym = sym;
-  env->binding[env->size]->val = val;
-  env->size++;
-}
-
-object_t *env_lookup(object_t *sym)
-{
-  env_t *cur_env = env_head->env;
-
-  while (cur_env != NULL) {
-    int i;
-    for (i = 0; i < cur_env->size; i++) {
-      if (strcmp(cur_env->binding[i]->sym->string, sym->string) == 0)
-        return cur_env->binding[i]->val;
-    }
-  }
-  fprintf(stderr, "Unbound variable: %s", sym->string);
-  goto_top();
 }

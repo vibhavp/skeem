@@ -29,22 +29,6 @@
 
 bool no_gc;
 
-struct _object_t;
-
-typedef struct bind {
-  struct _object_t *sym;
-  struct _object_t *val;
-} binding_t;
-
-typedef struct env {
-  int size;
-  binding_t **binding;
-  struct _object_t *next;
-  struct _object_t *prev;
-} env_t;
-
-struct _object_t *root_env, *env_head;
-
 extern cons_t *cons_init();
 extern void cons_free(cons_t *cell);
 extern object_t *obj_init(type_t type);
