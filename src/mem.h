@@ -28,6 +28,7 @@
 #include <setjmp.h>
 
 bool no_gc;
+jmp_buf err;
 
 extern cons_t *cons_init();
 extern void cons_free(cons_t *cell);
