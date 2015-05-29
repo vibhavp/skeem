@@ -156,12 +156,18 @@ void add_token(char *str)
 
 cons_t *token_to_cons(token_t *tok)
 {
-  cons_t *cell = cons_init(), *cur_cell = cell;
-
-  while (tok != NULL) {
-    object_t *obj = token_to_obj(tok);
-    
-  }
+  object_t *obj = token_to_obj(tok);
+  cons_t *cell;
+  
+  if (obj == NULL)
+    return NULL;
+  if (obj->type == LIST)
+    tok = list_end;
+  
+  cell = cons_init();
+  cell->car = obj;
+  cell->cdr = token_to_cons(tok->next);
+  return cell;
 }
 
 object_t *token_to_obj(token_t *tok)
@@ -196,7 +202,7 @@ object_t *token_to_obj(token_t *tok)
       if (tok->next->type == TOK_PAREN_CLOSE)
         return EMPTY_LIST;
       obj = obj_init(LIST);
-      obj->cell = token_to_cons(tok->next, obj->cell, obj->cell);
+      obj->cell = token_to_cons(tok->next);
       return obj;
     case TOK_PAREN_CLOSE:
       list_end = tok;
