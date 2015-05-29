@@ -76,70 +76,10 @@ void heap_init()
   heap_head = heap;
 }
 
-inline struct obj_list *obj_list_init()
+struct obj_list *obj_list_init()
 {
   struct obj_list *n = ERR_MALLOC(sizeof(struct obj_list));
-  n->next = NULL;
-  n->prev = NULL;
   return n;
-}
-
-void tree_insert(struct bind_tree *tree, object_t *symbol, object_t *val)
-{
-  struct bind_tree *y = NULL, *x = tree;
-
-  while (x != NULL) {
-    y = x;
-    int diff = strcmp(symbol->string, x->symbol->string);
-
-    if (diff < 0)
-      x = x->left;
-    else if (diff > 0)
-      x = x->right;
-    else { /*Symbol already exists*/
-      x->val = val;
-      return;
-    }
-  }
-  struct bind_tree *new = ERR_MALLOC(sizeof(struct bind_tree));
-  new->symbol = symbol;
-  new->val = val;
-  new->parent = y;
-  
-  if (y == NULL) {
-    tree->root = new;
-    return;
-  }
-  else if (strcmp(symbol->string, y->symbol->string) < 0)
-    y->left = new;
-  else
-    y->right = new;
-}
-
-inline void env_insert(object_t *symbol, object_t *val)
-{
-  tree_insert(env_head->env->tree, symbol, val);
-}
-
-object_t *tree_lookup(struct bind_tree *tree, object_t *symbol)
-{
-  int diff = strcmp(symbol->string, tree->symbol->string);
-  
-  while (tree != NULL && diff != 0) {
-    if (diff < 0)
-      tree = tree->left;
-    else
-      tree = tree->right;
-    
-    diff = strcmp(symbol->string, tree->symbol->string);
-  }
-
-  return tree == NULL ? NULL : tree->val;
-}
-
-inline object_t *env_lookup(object_t *symbol)
-{
-  return tree_lookup(env_head->env->tree, symbol);
 }
 
 void pin(object_t *obj)
@@ -205,9 +145,10 @@ void mem_init()
   heap = ERR_MALLOC(sizeof(struct obj_list));
   heap_head = heap;
 
-  env_global = ERR_MALLOC(sizeof(struct env));
+  env_global = ERR_MALLOC(sizeof(object_t));
+  env_global->env = ERR_MALLOC(sizeof(struct env));
+  env_global->env->tree = ERR_MALLOC(sizeof(struct bind_tree));
   env_head = env_global;
-  env_head->env->tree = ERR_MALLOC(sizeof(struct bind_tree));
   
   pinned = obj_list_init();
   pin_head = pinned;
@@ -236,9 +177,8 @@ object_t *obj_init(type_t type)
   printf("Allocated object type %s\n", strtype(type));
 #endif
   
-  if (type == ENVIRONMENT) {
+  if (type == ENVIRONMENT)
     obj->env = ERR_MALLOC(sizeof(struct env));
-  }
   num_obj += 1;
   return obj;
 }
@@ -249,8 +189,8 @@ void bind_tree_free(struct bind_tree *tree)
   {
     bind_tree_free(tree->left);
     struct bind_tree *right = tree->right;
-    free(tree);
     free(tree->symbol);
+    free(tree);
     bind_tree_free(right);
   }
 }
@@ -291,7 +231,6 @@ void mark(object_t *obj)
     }
   }
 }
-
 
 void mark_bind_tree(struct bind_tree *tree)
 {
@@ -359,6 +298,64 @@ void gc()
   max_obj = num_obj * 2;
 }
 
+void tree_insert(struct bind_tree *tree, object_t *symbol, object_t *val)
+{
+  struct bind_tree *y = NULL, *x = tree;
+
+  while (x != NULL) {
+    y = x;
+    int diff = strcmp(symbol->string, x->symbol->string);
+
+    if (diff < 0)
+      x = x->left;
+    else if (diff > 0)
+      x = x->right;
+    else { /*Symbol already exists*/
+      x->val = val;
+      return;
+    }
+  }
+  struct bind_tree *new = ERR_MALLOC(sizeof(struct bind_tree));
+  new->symbol = symbol;
+  new->val = val;
+  new->parent = y;
+  
+  if (y == NULL) {
+    tree->root = new;
+    return;
+  }
+  else if (strcmp(symbol->string, y->symbol->string) < 0)
+    y->left = new;
+  else
+    y->right = new;
+}
+
+inline void env_insert(object_t *symbol, object_t *val)
+{
+  tree_insert(env_head->env->tree, symbol, val);
+}
+
+object_t *tree_lookup(struct bind_tree *tree, object_t *symbol)
+{
+  int diff = strcmp(symbol->string, tree->symbol->string);
+  
+  while (tree != NULL && diff != 0) {
+    if (diff < 0)
+      tree = tree->left;
+    else
+      tree = tree->right;
+    
+    diff = strcmp(symbol->string, tree->symbol->string);
+  }
+
+  return tree == NULL ? NULL : tree->val;
+}
+
+inline object_t *env_lookup(object_t *symbol)
+{
+  return tree_lookup(env_head->env->tree, symbol);
+}
+
 void print_obj_list(struct obj_list *list)
 {
   struct obj_list *curr = list;
@@ -409,6 +406,7 @@ void print_pinned()
 void env_push()
 {
   env_head->env->next = obj_init(ENVIRONMENT);
+  env_head->env->next->env->prev = env_head;
   env_head = env_head->env->next;
 }
 
@@ -418,8 +416,6 @@ inline void env_pop()
   free(env_head->env->next);
   env_head->env->next = NULL;
 }
-
-extern jmp_buf err;
 
 _Noreturn void goto_top()
 {
