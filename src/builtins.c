@@ -468,21 +468,29 @@ object_t *apply(object_t *function, cons_t *args)
 }
 
 /* Evaluate object */
-__attribute__((hot))
 object_t *eval(object_t *obj)
 {
-  no_gc = false;
   switch (obj->type)
   {
     case LIST:
+      {
       env_push();
       object_t *val = apply(obj->cell->car, obj->cell->cdr);
       env_pop();
 
       return val;
+      }
     case SYMBOL:
-      return eval(env_lookup(obj));
+      {
+        object_t *result = eval(env_lookup(obj));
 
+        if (result == NULL) {
+          fprintf(stderr, "Unbound variable: %s", obj->string);
+          goto_top();
+        }
+        
+        return result;
+      }
     default:
       return obj;
   }
