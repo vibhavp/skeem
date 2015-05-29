@@ -53,14 +53,13 @@ bool balanced(char *form)
   return (commas % 2 == 0) && (paren == 0);
 }
 
-jmp_buf err;
 int main(int argc, char **argv)
 {
   char *input = NULL;
   size_t n = 0;
 
   printf("skeem version %s\n", SKEEM_VERSION);
-  root_env_init();
+  mem_init();
   builtins_init();
 
   while (true) {
@@ -76,6 +75,7 @@ int main(int argc, char **argv)
     printf("=>");
     
     register object_t *obj = tokens_to_obj();
+    no_gc = false;
     print_obj(eval(obj), stdout);
     putchar('\n');
 
