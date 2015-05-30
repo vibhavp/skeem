@@ -257,7 +257,7 @@ static object_t *call_operator(operator_t op, cons_t *args)
     case DIVIDE:
       return divide(eval(args->car), eval(args->cdr->car));
     default: /*MULTIPLY*/
-      return multiply(eval(args->car), eval(args->car));
+      return multiply(eval(args->car), eval(args->cdr->car));
   }
 }
 
@@ -407,20 +407,9 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
 }
 
 /* Call function using args as a list of arguments.
- * A function call in Scheme/Lisp is a list with the car
- * being the lambda/function symbol (an object_t type with cell/string set), and
- * the cdr being the arguments. The cdr is seperated into a different list, and
- * than passed to apply:
  * ((lambda (a b c) (+ a b c)) 1 2 3)
  *  |_______________________|  |___|
  *             car              cdr
- *
- * Which is internally represented as:
- * ((lambda.((a . (b . (c . NULL)). ((ADD . (a . (b . (c . NULL)))) . NULL)))).(1 . (2 . (3 . NULL))))
- *  |         |____________________||_____________________________________| |  |                    |
- *  |              parameters                       body                    |  |                    |
- *  |_______________________________________________________________________|  |____________________|
- *                               function (car)                                      args (cdr)
  */
 
 object_t *apply(object_t *function, cons_t *args)
@@ -520,8 +509,6 @@ void builtins_init()
     builtins[index]->type = OPERATOR;
     builtins[index]->operator = i;
   }
-
-
 
   CONST_TRUE = ERR_MALLOC(sizeof(object_t));
   CONST_TRUE->type = BOOLEAN;
