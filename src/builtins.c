@@ -32,19 +32,19 @@ object_t *add(object_t *n1, object_t *n2)
 {
   object_t *result;
 
-  if (_INTEGER_P(n1) || _INTEGER_P(n2)) {
+  if (_INTEGER_P(n1) && _INTEGER_P(n2)) {
     result = obj_init(INTEGER);
     result->integer = n1->integer + n2->integer;
   }
-  else if (_INTEGER_P(n1) || _FLOAT_P(n2)) {
+  else if (_INTEGER_P(n1) && _FLOAT_P(n2)) {
     result = obj_init(FLOAT);
     result->flt = n1->integer + n2->flt;
   }
-  else if (_FLOAT_P(n1) || _INTEGER_P(n2)) {
+  else if (_FLOAT_P(n1) && _INTEGER_P(n2)) {
     result = obj_init(FLOAT);
     result->flt = n1->flt + n2->integer;
   }
-  else if (_FLOAT_P(n1) || _FLOAT_P(n2)){
+  else if (_FLOAT_P(n1) && _FLOAT_P(n2)){
     result = obj_init(FLOAT);
     result->flt = n1->flt + n2->flt;
   }
@@ -459,22 +459,25 @@ object_t *apply(object_t *function, cons_t *args)
 /* Evaluate object */
 object_t *eval(object_t *obj)
 {
+  if (obj == NULL)
+    return NULL;
+
   switch (obj->type)
   {
     case LIST:
       {
-      env_push();
-      object_t *val = apply(obj->cell->car, obj->cell->cdr);
-      env_pop();
-
-      return val;
+        env_push();
+        object_t *val = apply(obj->cell->car, obj->cell->cdr);
+        env_pop();
+        
+        return val;
       }
     case SYMBOL:
       {
         object_t *result = eval(env_lookup(obj));
 
         if (result == NULL) {
-          fprintf(stderr, "Unbound variable: %s", obj->string);
+          fprintf(stderr, "Unbound variable: %s\n", obj->string);
           goto_top();
         }
         
