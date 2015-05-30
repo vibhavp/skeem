@@ -71,6 +71,8 @@ int main(int argc, char **argv)
     
     getline(&input, &n, stdin);
     scan(input, strlen(input));
+    if (feof(stdin))
+      break;
     
     printf("=>");
     
@@ -79,7 +81,6 @@ int main(int argc, char **argv)
     print_obj(eval(obj), stdout);
     putchar('\n');
 
-    free(input);
     clear_tokens();
   }
 
