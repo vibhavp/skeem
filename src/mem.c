@@ -177,8 +177,10 @@ object_t *obj_init(type_t type)
   printf("Allocated object type %s\n", strtype(type));
 #endif
   
-  if (type == ENVIRONMENT)
+  if (type == ENVIRONMENT) {
     obj->env = ERR_MALLOC(sizeof(struct env));
+    obj->env->tree = ERR_MALLOC(sizeof(struct bind_tree));
+  }
   num_obj += 1;
   return obj;
 }
