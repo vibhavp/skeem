@@ -134,7 +134,7 @@ token_t *str_to_tok(char *word)
       }
       return tok;
     case TOK_SYMBOL:
-      tok->string = word;
+      tok->string = strdup(word);
       return tok;
     default:
       return tok;
@@ -212,7 +212,7 @@ object_t *token_to_obj(token_t *tok)
     case TOK_OPERATOR_MINUS:
       return builtins[OPERATOR(SUBTRACT)];
     case TOK_OPERATOR_MULTIPLY:
-      return builtins[OPERATOR(DIVIDE)];
+      return builtins[OPERATOR(MULTIPLY)];
     case TOK_OPERATOR_DIVIDE:
       return builtins[OPERATOR(DIVIDE)];
   }
