@@ -15,6 +15,7 @@ default: release
 	$(CC) $(DEBUGFLAGS) -c $< -o $@
 
 skeem.o: builtins.c mem.c token.c types.c
+skeem.do: builtins.c mem.c token.c types.c
 
 debug: $(DOBJS) skeem.do
 	$(CC) $(DEBUGFLAGS) $(DOBJS) skeem.do -o skeem
