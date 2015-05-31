@@ -74,7 +74,8 @@ int main(int argc, char **argv)
     if (feof(stdin))
       break;
     
-    printf("=>");
+    printf("=> ");
+    fflush(stdout);
     
     register object_t *obj = tokens_to_obj();
     no_gc = false;
