@@ -1,30 +1,28 @@
-FLAGS = -std=gnu11 $(BUILDFLAGS) $(CFLAGS)
-CCOMP = $(if $(CC), $(CC), cc)
-OBJS = builtins.o mem.o types.o token.o
+NAME = skeem
+EXENAME = skeem
+SRCS = builtins.c mem.c token.c types.c
+OBJS = builtins.o mem.o token.o types.o
+DOBJS = builtins.do mem.do token.do types.do
+FLAGS = -falign-functions -std=gnu11 $(CFLAGS)
+DEBUGFLAGS = -g -DDEBUG $(FLAGS)
+RELEASEFLAGS = -O2 $(FLAGS)
 
-all: skeem
+default: release
 
-skeem: $(OBJS) skeem.o
-	$(CCOMP) $(FLAGS) $(OBJS) skeem.o -o skeem
+%.o: %.c
+	$(CC) $(RELEASEFLAGS) -c $< -o $@
+%.do: %.c
+	$(CC) $(DEBUGFLAGS) -c $< -o $@
 
-tests: $(OBJS) tests.c
-	$(CCOMP) $(FLAGS) $(OBJS) tests.c -o tests
+skeem.o: builtins.c mem.c token.c types.c
 
-skeem.o: skeem.c
-	$(CCOMP) $(FLAGS) -c skeem.c
+debug: $(DOBJS) skeem.do
+	$(CC) $(DEBUGFLAGS) $(DOBJS) skeem.do -o skeem
 
-builtins.o: builtins.c
-	$(CCOMP) $(FLAGS) -c builtins.c
-
-mem.o: mem.c
-	$(CCOMP) $(FLAGS) -c mem.c
-
-types.o: types.c
-	$(CCOMP) $(FLAGS) -c types.c
-
-token.o: token.c
-	$(CCOMP) $(FLAGS) -c token.c
+release: $(OBJS) skeem.o
+	$(CC) $(RELEASEFLAGS) $(OBJS) skeem.o -o skeem
 
 clean:
-	rm *.o
-	rm skeem
+	rm -f *.o
+	rm -f skeem
+	rm -r *.do

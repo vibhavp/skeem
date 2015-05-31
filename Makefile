@@ -1,10 +1,10 @@
 all: release
 
 debug:
-	+$(MAKE) -C src BUILDFLAGS="-g -DDEBUG"
+	cd src; make debug
 
 release:
-	+$(MAKE) -C src BUILDFLAGS='-O2'
+	cd src; make release
 
 clean:
 	cd src; make clean
