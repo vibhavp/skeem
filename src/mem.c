@@ -150,7 +150,7 @@ object_t *obj_init(type_t type)
 {
   if (num_obj == max_obj && !no_gc)
     gc();
-  
+
   object_t *obj = ERR_MALLOC(sizeof(object_t));
   obj->type = type;
   obj->marked = false;
@@ -159,16 +159,16 @@ object_t *obj_init(type_t type)
     num_obj += 1;
     return obj;
   }
-  
+
   heap_head->val = obj;
   heap_head->next = obj_list_init();
   heap_head->next->prev = heap_head;
   heap_head = heap_head->next;
-  
+
 #ifdef DEBUG
   printf("Allocated object type %s\n", strtype(type));
 #endif
-  
+
   if (type == ENVIRONMENT) {
     obj->env = ERR_MALLOC(sizeof(struct env));
     obj->env->tree = ERR_MALLOC(sizeof(struct bind_tree));
@@ -247,7 +247,7 @@ void mark_all()
 
   /*mark all pinned objects*/
   struct obj_list *cur_pin = pinned;
-  
+
   if (cur_pin->val == NULL) {
     while (cur_pin != NULL) {
       mark(cur_pin->val);
@@ -291,7 +291,7 @@ void gc()
 #ifdef DEBUG
   printf("Started GC cycle\n");
 #endif
-  
+
   mark_all();
   sweep();
   max_obj = num_obj * 2;
@@ -322,7 +322,7 @@ void tree_insert(struct bind_tree *tree, object_t *symbol, object_t *val)
   new->symbol = symbol;
   new->val = val;
   new->parent = y;
-  
+
   if (y == NULL) {
     tree->root = new;
     return;
@@ -344,13 +344,13 @@ object_t *tree_lookup(struct bind_tree *tree, object_t *symbol)
     return NULL;
 
   int diff = strcmp(symbol->string, tree->symbol->string);
-  
+
   while (tree != NULL && diff != 0) {
     if (diff < 0)
       tree = tree->left;
     else
       tree = tree->right;
-    
+
     diff = strcmp(symbol->string, tree->symbol->string);
   }
 
@@ -359,7 +359,15 @@ object_t *tree_lookup(struct bind_tree *tree, object_t *symbol)
 
 inline object_t *env_lookup(object_t *symbol)
 {
-  return tree_lookup(env_head->env->tree, symbol);
+  object_t *val = NULL;
+  object_t *cur = env_head->env->prev;
+
+  while (val == NULL && cur != NULL) {
+    val = tree_lookup(cur->env->tree, symbol);
+    cur = cur->env->prev;
+  }
+
+  return val != NULL ? val : tree_lookup(env_head->env->tree, symbol);
 }
 
 void print_obj_list(struct obj_list *list)
@@ -429,6 +437,6 @@ _Noreturn void goto_top()
     env_pop();
   while (pinned != NULL)
     unpin_head();
-  
+
   longjmp(err, 1);
 }
