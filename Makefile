@@ -4,7 +4,7 @@ debug:
 	+$(MAKE) -C src BUILDFLAGS="-g -DDEBUG"
 
 release:
-	+$(MAKE) -C src BUILDFLAGS='-O2 -fweb -fno-trapping-math -fno-signaling-nans'
+	+$(MAKE) -C src BUILDFLAGS='-O2'
 
 clean:
 	cd src; make clean
