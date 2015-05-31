@@ -249,6 +249,13 @@ void scan(char *str, size_t limit)
         }
         add_token(")");
         continue;
+      case '\n':
+        if (head_tok == NULL || head_tok->type != TOK_PAREN_CLOSE) {
+          word[word_index] = '\0';
+          add_token(word);
+          word_index = 0;
+          break;
+        }
       default:
         word[word_index++] = str[i];
     }
@@ -257,15 +264,16 @@ void scan(char *str, size_t limit)
 
 void clear_tokens()
 {
-  token_t *cur = tokens, *prev;
+  token_t *cur = tokens, *next;
 
   while (cur != NULL) {
 #ifdef DEBUG
     printf("Cleared token\n");
 #endif
-    prev = cur;
+
+    next = cur->next;
     free(cur);
-    cur = prev->next;
+    cur = next;
   }
   tokens = NULL;
   head_tok = NULL;
