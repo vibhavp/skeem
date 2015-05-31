@@ -424,7 +424,7 @@ object_t *apply(object_t *function, cons_t *args)
       correct_number_args(strop(function->operator), 2, args);
       return call_operator(function->operator, args);
     case SYMBOL:
-      function = env_lookup(function);
+      function = eval(function);
       return apply(function, args);
     case LIST:
       if (function->cell->car->builtin == LAMBDA) {
