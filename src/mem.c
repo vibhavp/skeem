@@ -335,7 +335,7 @@ void tree_insert(struct bind_tree *tree, object_t *symbol, object_t *val)
 
 inline void env_insert(object_t *symbol, object_t *val)
 {
-  tree_insert(env_head->env->tree, symbol, val);
+  tree_insert(env_head->env->prev->env->tree, symbol, val);
 }
 
 object_t *tree_lookup(struct bind_tree *tree, object_t *symbol)
