@@ -70,12 +70,6 @@ void *ERR_MALLOC(size_t bytes)
   return ptr;
 }
 
-void heap_init()
-{
-  heap = ERR_MALLOC(sizeof(struct obj_list));
-  heap_head = heap;
-}
-
 struct obj_list *obj_list_init()
 {
   struct obj_list *n = ERR_MALLOC(sizeof(struct obj_list));
@@ -106,6 +100,7 @@ void unpin_head()
 #ifdef DEBUG
   printf("Unpinned head.\n");
 #endif
+
   pin_head->val->marked = false;
   if (pin_head != pinned) {
     pin_head = pin_head->prev;
@@ -133,7 +128,7 @@ void cons_free(cons_t *cell)
   cons_t *curr = cell;
 
   while (curr != NULL)
-  {
+ {
     obj_free(curr->car);
     curr = curr->cdr;
   }
@@ -149,9 +144,6 @@ void mem_init()
   env_global->env = ERR_MALLOC(sizeof(struct env));
   env_global->env->tree = ERR_MALLOC(sizeof(struct bind_tree));
   env_head = env_global;
-  
-  pinned = obj_list_init();
-  pin_head = pinned;
 }
 
 object_t *obj_init(type_t type)
@@ -255,9 +247,12 @@ void mark_all()
 
   /*mark all pinned objects*/
   struct obj_list *cur_pin = pinned;
-  while (cur_pin != NULL) {
-    mark(cur_pin->val);
-    cur_pin = cur_pin->next;
+  
+  if (cur_pin->val == NULL) {
+    while (cur_pin != NULL) {
+      mark(cur_pin->val);
+      cur_pin = cur_pin->next;
+    }
   }
 }
 
@@ -269,6 +264,7 @@ void sweep()
 
     if (!curr->val->marked) {
       obj_free(curr->val);
+
       if (prev != NULL) {
         prev->next = curr->next;
         free(curr);
@@ -283,6 +279,7 @@ void sweep()
       num_obj--;
     }
     else {
+      curr->val->marked = false;
       prev = curr;
       curr = curr->next;
     }
@@ -304,20 +301,24 @@ void tree_insert(struct bind_tree *tree, object_t *symbol, object_t *val)
 {
   struct bind_tree *y = NULL, *x = tree;
 
-  while (x != NULL) {
-    y = x;
-    int diff = strcmp(symbol->string, x->symbol->string);
+  if (tree->symbol != NULL) { /*tree isnt empty*/
+    while (x != NULL) {
+      y = x;
+      int diff = strcmp(symbol->string, x->symbol->string);
 
-    if (diff < 0)
-      x = x->left;
-    else if (diff > 0)
-      x = x->right;
-    else { /*Symbol already exists*/
-      x->val = val;
-      return;
+      if (diff < 0)
+        x = x->left;
+      else if (diff > 0)
+        x = x->right;
+      else { /*Symbol already exists*/
+        x->val = val;
+        return;
+      }
     }
   }
-  struct bind_tree *new = ERR_MALLOC(sizeof(struct bind_tree));
+
+  struct bind_tree *new = tree->symbol == NULL ?
+      tree : ERR_MALLOC(sizeof(struct bind_tree));
   new->symbol = symbol;
   new->val = val;
   new->parent = y;
@@ -339,6 +340,9 @@ inline void env_insert(object_t *symbol, object_t *val)
 
 object_t *tree_lookup(struct bind_tree *tree, object_t *symbol)
 {
+  if (tree->symbol == NULL) /*No symbol in */
+    return NULL;
+
   int diff = strcmp(symbol->string, tree->symbol->string);
   
   while (tree != NULL && diff != 0) {
