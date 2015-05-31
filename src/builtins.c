@@ -356,7 +356,7 @@ static void correct_number_args(char *function, int params_no,
   int len = length(args);
   if (len != params_no) {
     fprintf(stderr,
-            "Wrong number of arguments to %s - %d. (Wanted %d)\n",
+            "Wrong number of arguments to %s (Got %d, Wanted %d)\n",
             function, len, params_no);
     goto_top();
   }
