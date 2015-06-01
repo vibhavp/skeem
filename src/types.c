@@ -103,8 +103,18 @@ void print_obj(object_t *obj, FILE *stream)
     case BOOLEAN:
       fprintf(stream, obj->boolean ? "true" : "false");
       break;
-    default:
-      fprintf(stream, "builtin");
+    case LIST:
+      {
+        fprintf(stream, "( ");
+        cons_t *cur = obj->cell;
+
+        while (cur != NULL) {
+          print_obj(cur->car, stream);
+          fputs(" ", stream);
+          cur = cur->cdr;
+        }
+        fprintf(stream, " )");
+      }
   }
 }
 
