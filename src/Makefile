@@ -24,6 +24,5 @@ release: $(OBJS) skeem.o
 	$(CC) $(RELEASEFLAGS) $(OBJS) skeem.o -o skeem
 
 clean:
-	rm -f *.o
+	rm -f *.o *.do
 	rm -f skeem
-	rm -r *.do
