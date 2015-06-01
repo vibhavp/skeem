@@ -218,24 +218,12 @@ object_t *cond(cons_t *clauses)
   goto_top();
 }
 
-object_t *cdr(object_t *cell)
-{
-  object_t *obj = obj_init(LIST);
-   obj->cell = cell->cell->cdr;
-  return obj;
-}
-
-inline object_t *car(cons_t *cell)
-{
-  return cell->car;
-}
-
 object_t *define(object_t *sym, object_t *val)
 {
   if (_SYMBOL_P(sym))
     env_insert(sym, val);
   else {
-    fprintf(stderr, "Wrong argument type - %s (needed symbol)", strtype(sym->type));
+    fprintf(stderr, "Wrong argument type - %s (needed symbol)\n", strtype(sym->type));
     goto_top();
   }
 
@@ -362,6 +350,28 @@ static void correct_number_args(char *function, int params_no,
   }
 }
 
+object_t *car(object_t *obj)
+{
+  if (obj->type != LIST) {
+    fprintf(stderr, "Wrong argument type - %s. (Expected list)\n",
+            strtype(obj->type));
+    goto_top();
+  }
+  return obj->cell->car;
+}
+
+object_t *cdr(object_t *obj)
+{
+  if(obj->type != LIST) {
+    fprintf(stderr, "Wrong argument type - %s. (Expected list)\n",
+            strtype(obj->type));
+    goto_top();
+  }
+  object_t *o = obj_init(LIST);
+  o->cell = obj->cell->cdr;
+  return o->cell == NULL ? EMPTY_LIST : o;
+}
+
 static object_t *call_builtin(builtin_t builtin, cons_t *args)
 {
   object_t obj, *rtrn;
@@ -371,16 +381,13 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
       return and(args->car, args->cdr->car);
     case CAR:
       correct_number_args("car", 1, args);
-      return eval(args->car);
+      return car(eval(args->car));
     case CDR:
       correct_number_args("cdr", 1, args);
-      obj.type = LIST;
-      obj.cell = args;
-      rtrn = cdr(eval(&obj));
-      return rtrn;
+      return cdr(eval(args->car));
 
     case CONS:
-      correct_number_args("cons", 1, args);
+      correct_number_args("cons", 2, args);
       return cons(args->car, args->cdr->car);
     case DEFINE:
       correct_number_args("define", 2, args);
@@ -451,7 +458,7 @@ object_t *apply(object_t *function, cons_t *args)
       }
     default:
       fprintf(stderr, "Invalid Function: ");
-      /* print_obj(function, stderr); */
+      print_obj(function, stderr);
       goto_top();
   }
 }
@@ -474,13 +481,16 @@ object_t *eval(object_t *obj)
       }
     case SYMBOL:
       {
-        object_t *result = eval(env_lookup(obj));
+        object_t *result = env_lookup(obj);
 
         if (result == NULL) {
           fprintf(stderr, "Unbound variable: %s\n", obj->string);
           goto_top();
         }
 
+        while (result->type == SYMBOL)
+          result = env_lookup(obj);
+        
         return result;
       }
     default:
@@ -506,7 +516,7 @@ void builtins_init()
   }
 
   for (operator_t i = ADD; i <= MULTIPLY; i++) {
-    int index = EQUAL_P+i+2;
+    int index = QUOTE+EQUAL_P+i+2;
 
     builtins[index] = ERR_MALLOC(sizeof(object_t));
     builtins[index]->type = OPERATOR;
