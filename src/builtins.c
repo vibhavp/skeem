@@ -83,7 +83,7 @@ object_t *divide(object_t *n1, object_t *n2)
       fprintf(stderr, "divide: Division by zero.\n");
       goto_top();
     }
-      
+
     object_t *result = obj_init(FLOAT);
     result->flt = NUMBER(n1) / NUMBER(n2);
 
@@ -469,7 +469,7 @@ object_t *eval(object_t *obj)
         env_push();
         object_t *val = apply(obj->cell->car, obj->cell->cdr);
         env_pop();
-        
+
         return val;
       }
     case SYMBOL:
@@ -480,7 +480,7 @@ object_t *eval(object_t *obj)
           fprintf(stderr, "Unbound variable: %s\n", obj->string);
           goto_top();
         }
-        
+
         return result;
       }
     default:
