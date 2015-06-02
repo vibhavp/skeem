@@ -430,8 +430,10 @@ inline void env_pop()
   free(env_head->env->next);
   env_head->env->next = NULL;
 }
-
-_Noreturn void goto_top()
+#if __GNUC__ >= 4 && __GNUC_MINOR > 6
+_Noreturn
+#endif
+void goto_top()
 {
   while (env_head->env->next != NULL)
     env_pop();
