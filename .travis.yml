@@ -2,4 +2,4 @@ sudo: required
 language: c
 compiler:
   - gcc
-install: make release
+script: make release
