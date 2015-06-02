@@ -29,6 +29,7 @@
 #include <setjmp.h>
 #include <math.h>
 #include "types.h"
+#include "token.h"
 
 char *strtype(type_t type)
 {
@@ -81,6 +82,13 @@ char *strop(operator_t op)
   }
 }
 
+static const char *builtin_syms[22] =  {"and", "car", "cdr", "cond", "cons",
+                                        "define", "eval", "lambda", "not",
+                                        "or", "print", "quote", "integer?",
+                                        "float?", "number?", "string?",
+                                        "symbol?", "list?", "lambda?",
+                                        "boolean?", "eqv?", "equal?"};
+
 void print_obj(object_t *obj, FILE *stream)
 {
   switch(obj->type)
@@ -105,16 +113,27 @@ void print_obj(object_t *obj, FILE *stream)
       break;
     case LIST:
       {
-        fprintf(stream, "( ");
+        fprintf(stream, "(");
         cons_t *cur = obj->cell;
 
-        while (cur != NULL) {
+        while (cur->cdr != NULL) {
           print_obj(cur->car, stream);
           fputs(" ", stream);
           cur = cur->cdr;
         }
-        fprintf(stream, " )");
+        print_obj(cur->car, stream);
+        fprintf(stream, ")");
       }
+      break;
+    case BUILTIN:
+      fprintf(stream, "%s", builtin_syms[obj->builtin]);
+      break;
+    case PREDICATE:
+      fprintf(stream, "%s", builtin_syms[PREDICATE(obj->predicate)]);
+      break;
+    case OPERATOR:
+      fprintf(stream, "%s", builtin_syms[OPERATOR(obj->operator)]);
+      break;
   }
 }
 
