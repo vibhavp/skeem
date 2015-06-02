@@ -177,7 +177,7 @@ object_t *print(object_t *obj)
 object_t *cons(object_t *obj1, object_t *obj2)
 {
   object_t *cons = obj_init(LIST);
-
+ 
   cons->cell = cons_init();
   cons->cell->car = obj1;
   cons->cell->cdr = cons_init();
@@ -474,6 +474,9 @@ object_t *eval(object_t *obj)
     case LIST:
       {
         env_push();
+        if (obj->cell->car->type == BUILTIN && obj->cell->car->builtin == LAMBDA)
+          return correct_number_args("lambda", 2, obj->cell->cdr), obj;
+
         object_t *val = apply(obj->cell->car, obj->cell->cdr);
         env_pop();
 
