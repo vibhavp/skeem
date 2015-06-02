@@ -3,7 +3,7 @@ EXENAME = skeem
 SRCS = builtins.c mem.c token.c types.c
 OBJS = builtins.o mem.o token.o types.o
 DOBJS = builtins.do mem.do token.do types.do
-FLAGS = -falign-functions -std=gnu11 $(CFLAGS)
+FLAGS = -falign-functions -std=gnu1x $(CFLAGS)
 DEBUGFLAGS = -g -DDEBUG $(FLAGS)
 RELEASEFLAGS = -O2 $(FLAGS)
 
