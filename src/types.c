@@ -59,7 +59,7 @@ int length(cons_t *list)
   int len = 0;
   cons_t *head = list;
 
-  while (head != 0)
+  while (head != NULL)
   {
     len++;
     head = head->cdr;
