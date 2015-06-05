@@ -78,6 +78,8 @@ typedef enum {
   EQUAL_P
 } predicate_t;
 
+#define BUILTIN_LEN 24
+extern char *builtin_syms[];
 struct cons;
 
 typedef struct _object_t {
