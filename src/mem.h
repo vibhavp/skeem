@@ -44,6 +44,7 @@ extern void env_pop();
 extern void goto_top();
 extern void env_insert(struct _object_t *sym, struct _object_t *val);
 extern struct _object_t *env_lookup(struct _object_t *sym);
+extern void gc();
 
 #ifdef emalloc
 #define ERR_MALLOC err_malloc
