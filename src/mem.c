@@ -429,12 +429,12 @@ void env_push()
   env_head->env->next = obj_init(ENVIRONMENT);
   env_head->env->next->env->prev = env_head;
   env_head = env_head->env->next;
+  env_head->marked = true;
 }
 
 inline void env_pop()
 {
   env_head = env_head->env->prev;
-  free(env_head->env->next);
   env_head->env->next = NULL;
 }
 
