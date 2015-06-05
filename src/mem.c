@@ -204,6 +204,9 @@ void obj_free(object_t *obj)
     default:
       break;
   }
+#ifdef DEBUG
+  printf("Freed object type %s\n", strtype(obj->type));
+#endif
   free(obj);
 }
 
