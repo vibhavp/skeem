@@ -267,7 +267,7 @@ void sweep()
 {
   struct obj_list *curr = heap, *prev = NULL;
 
-  while (curr != NULL) {
+  while (curr->val != NULL) {
 
     if (!curr->val->marked) {
       obj_free(curr->val);
