@@ -82,13 +82,6 @@ char *strop(operator_t op)
   }
 }
 
-static const char *builtin_syms[22] =  {"and", "car", "cdr", "cond", "cons",
-                                        "define", "eval", "lambda", "not",
-                                        "or", "print", "quote", "integer?",
-                                        "float?", "number?", "string?",
-                                        "symbol?", "list?", "lambda?",
-                                        "boolean?", "eqv?", "equal?"};
-
 void print_obj(object_t *obj, FILE *stream)
 {
   switch(obj->type)
