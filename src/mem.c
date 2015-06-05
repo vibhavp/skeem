@@ -240,15 +240,20 @@ void mark_bind_tree(struct bind_tree *tree)
 
 void mark_all()
 {
-  struct env *cur = env_global->env;
 
+  object_t *cur = env_global;
+  
   while (cur != NULL) {
-    mark_bind_tree(cur->tree);
-    cur = cur->next->env;
+    if (cur->env->tree->symbol != NULL) /*tree isnt empty*/
+      mark_bind_tree(cur->env->tree);
+    cur->marked = true;
+    cur = cur->env->next;
   }
 
   /*mark all pinned objects*/
   struct obj_list *cur_pin = pinned;
+  if (pinned == NULL)
+    return;
 
   if (cur_pin->val == NULL) {
     while (cur_pin != NULL) {
