@@ -184,7 +184,7 @@ object_t *token_to_obj(token_t *tok)
       return obj;
     case TOK_SYMBOL:
       /*Check if symbol is a builtin*/
-      for (int i = 0; i < 22; i++) {
+      for (int i = 0; i < BUILTIN_LEN; i++) {
         if (strcmp(tok->string, builtin_syms[i]) == 0)
           return builtins[i];
       }
