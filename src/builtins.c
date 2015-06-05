@@ -398,13 +398,19 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
     case CDR:
       correct_number_args("cdr", 1, args);
       return cdr(eval(args->car));
-
     case CONS:
       correct_number_args("cons", 2, args);
       return cons(args->car, args->cdr->car);
     case DEFINE:
       correct_number_args("define", 2, args);
       return define(args->car, eval(args->cdr->car));
+    case EVAL:
+      correct_number_args("eval", 1, args);
+      return eval(args->car);
+    case EXIT:
+      correct_number_args("exit", 0, args);
+      printf("Exiting\n");
+      exit(EXIT_SUCCESS);
     case GC:
       correct_number_args("garbage-collect", 0, args);
       gc();
@@ -528,7 +534,7 @@ void builtins_init()
 {
   char *tmp[BUILTIN_LEN] =  {"and", "car", "cdr", "cond",
                              "cons", "define", "eval",
-                             "garbage-collect",
+                             "exit", "garbage-collect",
                              "lambda", "length", "not",
                              "or", "print", "quote",
                              "integer?", "float?",

@@ -49,6 +49,7 @@ typedef enum {
   CONS,
   DEFINE,
   EVAL,
+  EXIT,
   GC,
   LAMBDA,
   LENGTH,
@@ -78,7 +79,7 @@ typedef enum {
   EQUAL_P
 } predicate_t;
 
-#define BUILTIN_LEN 24
+#define BUILTIN_LEN 25
 extern char *builtin_syms[];
 struct cons;
 
