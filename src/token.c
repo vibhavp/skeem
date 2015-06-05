@@ -28,12 +28,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-static const char *builtin_syms[22] =  {"and", "car", "cdr", "cond", "cons",
-                                        "define", "eval", "lambda", "not",
-                                        "or", "print", "quote", "integer?",
-                                        "float?", "number?", "string?",
-                                        "symbol?", "list?", "lambda?",
-                                        "boolean?", "eqv?", "equal?"};
 
 enum tok_type {
   TOK_INT,
