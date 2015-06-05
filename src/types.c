@@ -125,8 +125,26 @@ void print_obj(object_t *obj, FILE *stream)
       fprintf(stream, "%s", builtin_syms[PREDICATE(obj->predicate)]);
       break;
     case OPERATOR:
-      fprintf(stream, "%s", builtin_syms[OPERATOR(obj->operator)]);
+      {
+        char op;
+      switch(obj->operator)
+      {
+        case ADD:
+          op = '+';
+          break;
+        case MULTIPLY:
+          op = '*';
+          break;
+        case DIVIDE:
+          op = '/';
+          break;
+        case SUBTRACT:
+          op = '-';
+          break;
+      }
+      fprintf(stream, "%c", op);
       break;
+      }
   }
 }
 
