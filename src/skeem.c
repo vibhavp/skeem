@@ -55,6 +55,9 @@ bool balanced(char *form)
 
 int main(int argc, char **argv)
 {
+#ifdef DEBUG
+  setbuf(stdout, NULL);
+#endif
   char *input = NULL;
   size_t n = 0;
 
