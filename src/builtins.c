@@ -372,9 +372,22 @@ object_t *cdr(object_t *obj)
   return o->cell == NULL ? EMPTY_LIST : o;
 }
 
+object_t *obj_len(object_t *obj)
+{
+  if (obj->type != LIST) {
+    fprintf(stderr, "Wrong argument type - %s. (Expected list)\n",
+            strtype(obj->type));
+    goto_top();
+  }
+
+  object_t *len = obj_init(INTEGER);
+  len->integer = length(obj->cell);
+
+  return len;
+}
+
 static object_t *call_builtin(builtin_t builtin, cons_t *args)
 {
-  object_t obj, *rtrn;
   switch(builtin) {
     case AND:
       correct_number_args("and", 2, args);
@@ -392,12 +405,17 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
     case DEFINE:
       correct_number_args("define", 2, args);
       return define(args->car, eval(args->cdr->car));
+    case GC:
+      correct_number_args("garbage-collect", 0, args);
+      gc();
+      return CONST_TRUE;
     case COND:
       correct_number_args("cond", 1, args);
       return cond(args);
-    case LAMBDA:
-      /*TODO*/
-      /* return make_procedure(args->car->cell, args->cdr->car->cell); */
+    case LENGTH:
+      correct_number_args("length", 1 , args);
+      return obj_len(eval(args->car));
+ 
     case NOT:
       correct_number_args("not", 1, args);
       return not(eval(args->car));
@@ -473,6 +491,7 @@ object_t *eval(object_t *obj)
   {
     case LIST:
       {
+        obj->marked = true;
         env_push();
         if (obj->cell->car->type == BUILTIN && obj->cell->car->builtin == LAMBDA)
           return correct_number_args("lambda", 2, obj->cell->cdr), obj;
@@ -480,6 +499,7 @@ object_t *eval(object_t *obj)
         object_t *val = apply(obj->cell->car, obj->cell->cdr);
         env_pop();
 
+        obj->marked = false;
         return val;
       }
     case SYMBOL:
@@ -501,9 +521,23 @@ object_t *eval(object_t *obj)
   }
 }
 
+char *builtin_syms[BUILTIN_LEN];
+
 /*Initialize all builtins, including procedures, predicates, and operators*/
 void builtins_init()
 {
+  char *tmp[BUILTIN_LEN] =  {"and", "car", "cdr", "cond",
+                             "cons", "define", "eval",
+                             "garbage-collect",
+                             "lambda", "length", "not",
+                             "or", "print", "quote",
+                             "integer?", "float?",
+                             "number?", "string?", "symbol?",
+                             "list?", "lambda?", "boolean?",
+                             "eqv?", "equal?"};
+  for (int i = 0; i < BUILTIN_LEN; i++)
+    builtin_syms[i] = tmp[i];
+
   for (builtin_t i = AND; i <= QUOTE; i++) {
     builtins[i] = ERR_MALLOC(sizeof(object_t));
     builtins[i]->type = BUILTIN;
