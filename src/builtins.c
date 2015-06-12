@@ -32,28 +32,38 @@ object_t *add(object_t *n1, object_t *n2)
 {
   object_t *result;
 
-  if (_INTEGER_P(n1) && _INTEGER_P(n2)) {
-    result = obj_init(INTEGER);
-    result->integer = n1->integer + n2->integer;
-  }
-  else if (_INTEGER_P(n1) && _FLOAT_P(n2)) {
+  if (_INTEGER_P(n1)) {
+      if (_INTEGER_P(n2)) {
+        result = obj_init(INTEGER);
+        result->integer = n1->integer + n2->integer;
+      }
+      else if (_FLOAT_P(n2)) {
+        result = obj_init(FLOAT);
+        result->flt = n1->integer + n2->flt;
+      }
+      else
+        goto err;
+    }
+
+  if (_FLOAT_P(n1)) {
     result = obj_init(FLOAT);
-    result->flt = n1->integer + n2->flt;
-  }
-  else if (_FLOAT_P(n1) && _INTEGER_P(n2)) {
-    result = obj_init(FLOAT);
-    result->flt = n1->flt + n2->integer;
-  }
-  else if (_FLOAT_P(n1) && _FLOAT_P(n2)){
-    result = obj_init(FLOAT);
-    result->flt = n1->flt + n2->flt;
-  }
-  else {
-    fprintf(stderr, "add: Wrong argument type(s).");
-    goto_top();
+
+    if (_INTEGER_P(n2))
+      result->flt = n1->flt + n2->integer;
+    else if (_FLOAT_P(n2))
+      result->flt = n1->flt + n2->flt;  
+    else
+      goto err;
   }
 
+  else
+    goto err;
+
   return result;
+
+err:
+  fprintf(stderr,"add: Wrong argument type(s)");
+  goto_top();
 }
 
 object_t *subtract(object_t *n1, object_t *n2)
@@ -98,28 +108,38 @@ object_t *multiply(object_t *n1, object_t *n2)
 {
   object_t *result;
 
-  if (_INTEGER_P(n1) || _INTEGER_P(n2)) {
-    result = obj_init(INTEGER);
-    result->integer = n1->integer * n2->integer;
-  }
-  else if (_INTEGER_P(n1) || _FLOAT_P(n2)) {
+  if (_INTEGER_P(n1)) {
+      if (_INTEGER_P(n2)) {
+        result = obj_init(INTEGER);
+        result->integer = n1->integer * n2->integer;
+      }
+      else if (_FLOAT_P(n2)) {
+        result = obj_init(FLOAT);
+        result->flt = n1->integer * n2->flt;
+      }
+      else
+        goto err;
+    }
+
+  if (_FLOAT_P(n1)) {
     result = obj_init(FLOAT);
-    result->flt = n1->integer * n2->flt;
-  }
-  else if (_FLOAT_P(n1) || _INTEGER_P(n2)) {
-    result = obj_init(FLOAT);
-    result->flt = n1->flt * n2->integer;
-  }
-  else if (_FLOAT_P(n1) || _FLOAT_P(n2)){
-    result = obj_init(FLOAT);
-    result->flt = n1->flt * n2->flt;
-  }
-  else {
-    fprintf(stderr, "add: Wrong argument type(s).");
-    goto_top();
+
+    if (_INTEGER_P(n2))
+      result->flt = n1->flt * n2->integer;
+    else if (_FLOAT_P(n2))
+      result->flt = n1->flt * n2->flt;  
+    else
+      goto err;
   }
 
+  else
+    goto err;
+
   return result;
+
+err:
+  fprintf(stderr,"multiply: Wrong argument type(s)");
+  goto_top();
 }
 
 #define IS_FALSE(val) (_BOOLEAN_P((val)) && !(val)->boolean)
@@ -213,9 +233,7 @@ object_t *cond(cons_t *clauses)
     curr_cell = curr_cell->cdr;
   }while(curr_cell != NULL);
 
-  /*None of conditions are true*/
-  fprintf(stderr, "None of the conditions in cond expression are true.");
-  goto_top();
+  return CONST_TRUE;
 }
 
 object_t *define(object_t *sym, object_t *val)
@@ -476,6 +494,7 @@ object_t *apply(object_t *function, cons_t *args)
 
         while (body->cdr != NULL) {
           eval(body->car);
+          body = body->cdr;
         }
         /*Reached the end of function.*/
         return eval(body->car);
