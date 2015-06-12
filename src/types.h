@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "builtins.h"
 
 /*Object types.*/
 typedef enum types {
@@ -40,24 +41,6 @@ typedef enum types {
   PREDICATE,
   ENVIRONMENT
 } type_t;
-
-typedef enum {
-  AND,
-  CAR,
-  CDR,
-  COND,
-  CONS,
-  DEFINE,
-  EVAL,
-  EXIT,
-  GC,
-  LAMBDA,
-  LENGTH,
-  NOT,
-  OR,
-  PRINT,
-  QUOTE
-} builtin_t;
 
 typedef enum {
   ADD,
@@ -79,7 +62,7 @@ typedef enum {
   EQUAL_P
 } predicate_t;
 
-#define BUILTIN_LEN 25
+#define BUILTIN_LEN 26
 extern char *builtin_syms[];
 struct cons;
 

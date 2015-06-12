@@ -38,6 +38,24 @@
                         && (n)->cell->car->builtin == LAMBDA)
 #define _BOOLEAN_P(n) ((n)->type == BOOLEAN)
 
+typedef enum {
+  AND,
+  CAR,
+  CDR,
+  COND,
+  CONS,
+  DEFINE,
+  EVAL,
+  EXIT,
+  GC,
+  LAMBDA,
+  LENGTH,
+  NOT,
+  OR,
+  PRINT,
+  QUOTE
+} builtin_t;
+
 extern object_t *add(object_t *n1, object_t *n2);
 extern object_t *subtract(object_t *n1, object_t *n2);
 extern object_t *cond(cons_t *clauses);
