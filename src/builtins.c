@@ -281,30 +281,54 @@ static object_t *call_operator(operator_t op, cons_t *args)
 
 #define BOOL_TO_OBJ(predicate) ((predicate) ? CONST_TRUE : CONST_FALSE)
 
-object_t *call_predicate(cons_t *obj, predicate_t pred)
+/*true if the length of args == params_no. Else, print an error message and
+ * return false*/
+static void correct_number_args(char *function, int params_no,
+                                cons_t *args)
 {
+  int len = length(args);
+  if (len != params_no) {
+    fprintf(stderr,
+            "Wrong number of arguments to %s (Got %d, Wanted %d)\n",
+            function, len, params_no);
+    goto_top();
+  }
+}
+
+object_t *call_predicate(cons_t *obj, predicate_t pred)
+{ 
   switch(pred)
   {
     case INTEGER_P:
-      return BOOL_TO_OBJ(_INTEGER_P(obj->car));
+      correct_number_args(strpred(pred), 1, obj);
+      return BOOL_TO_OBJ(_INTEGER_P(eval(obj->car)));
     case FLOAT_P:
-      return BOOL_TO_OBJ(_FLOAT_P(obj->car));
+      correct_number_args(strpred(pred), 1, obj);
+      return BOOL_TO_OBJ(_FLOAT_P(eval(obj->car)));
     case NUMBER_P:
-      return BOOL_TO_OBJ(_NUMBER_P(obj->car));
+      correct_number_args(strpred(pred), 1, obj);
+      return BOOL_TO_OBJ(_NUMBER_P(eval(obj->car)));
     case STRING_P:
-      return BOOL_TO_OBJ(_STRING_P(obj->car));
+      correct_number_args(strpred(pred), 1, obj);
+      return BOOL_TO_OBJ(_STRING_P(eval(obj->car)));
     case SYMBOL_P:
+      correct_number_args(strpred(pred), 1, obj);
       return BOOL_TO_OBJ(_SYMBOL_P(obj->car));
     case LIST_P:
-      return BOOL_TO_OBJ(_LIST_P(obj->car));
+      correct_number_args(strpred(pred), 1, obj);
+      return BOOL_TO_OBJ(_LIST_P(eval(obj->car)));
     case LAMBDA_P:
-      return BOOL_TO_OBJ(_LAMBDA_P(obj->car));
+      correct_number_args(strpred(pred), 1, obj);
+      return BOOL_TO_OBJ(_LAMBDA_P(eval(obj->car)));
     case BOOLEAN_P:
-      return BOOL_TO_OBJ(_BOOLEAN_P(obj->car));
+      correct_number_args(strpred(pred), 1, obj);
+      return BOOL_TO_OBJ(_BOOLEAN_P(eval(obj->car)));
     case EQV_P:
-      return BOOL_TO_OBJ(eqv(obj->car, obj->cdr->car));
+      correct_number_args(strpred(pred), 2, obj);
+      return BOOL_TO_OBJ(eqv(eval(obj->car), eval(obj->cdr->car)));
     case EQUAL_P:
-      return BOOL_TO_OBJ(equal(obj->car, obj->cdr->car));
+      correct_number_args(strpred(pred), 2, obj);
+      return BOOL_TO_OBJ(equal(eval(obj->car), eval(obj->cdr->car)));
   }
 }
 
@@ -364,20 +388,6 @@ bool equal(object_t *obj1, object_t *obj2)
     }
   }
   return false;
-}
-
-/*true if the length of args == params_no. Else, print an error message and
- * return false*/
-static void correct_number_args(char *function, int params_no,
-                                cons_t *args)
-{
-  int len = length(args);
-  if (len != params_no) {
-    fprintf(stderr,
-            "Wrong number of arguments to %s (Got %d, Wanted %d)\n",
-            function, len, params_no);
-    goto_top();
-  }
 }
 
 object_t *car(object_t *obj)
@@ -481,7 +491,6 @@ object_t *apply(object_t *function, cons_t *args)
     case BUILTIN:
       return call_builtin(function->builtin, args);
     case PREDICATE:
-      correct_number_args(strpred(function->predicate), 1, args);
       return call_predicate(args, function->predicate);
     case OPERATOR:
       correct_number_args(strop(function->operator), 2, args);
