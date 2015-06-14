@@ -56,7 +56,8 @@ typedef enum {
   NOT,
   OR,
   PRINT,
-  QUOTE
+  QUOTE,
+  WHILE
 } builtin_t;
 
 typedef enum {
@@ -79,7 +80,7 @@ typedef enum {
   EQUAL_P
 } predicate_t;
 
-#define BUILTIN_LEN 25
+#define BUILTIN_LEN 26
 extern char *builtin_syms[];
 struct cons;
 
