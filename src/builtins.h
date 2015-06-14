@@ -25,8 +25,8 @@
 #include "types.h"
 #include <setjmp.h>
 
-#define OPERATOR(o) ((o)+QUOTE+EQUAL_P+2)
-#define PREDICATE(p) ((p)+QUOTE+2)
+#define OPERATOR(o) ((o)+WHILE+EQUAL_P+2)
+#define PREDICATE(p) ((p)+WHILE+2)
 #define _INTEGER_P(n)  ((n)->type == INTEGER)
 #define _FLOAT_P(n)    ((n)->type == FLOAT)
 #define _NUMBER_P(n)   (_INTEGER_P((n)) || _FLOAT_P((n)))

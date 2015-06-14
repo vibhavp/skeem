@@ -461,6 +461,9 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
     case PRINT:
       correct_number_args("print", 1, args);
       return print(eval(args->car));
+    case WHILE:
+      correct_number_args("while", 2, args);
+      return loop_while(eval(args->car), args->cdr->car);
     default: /*QUOTE*/
       correct_number_args("quote", 1, args);
       return quote(args->car);
@@ -567,7 +570,7 @@ void builtins_init()
                              "cons", "define", "eval",
                              "exit", "garbage-collect",
                              "lambda", "length", "not",
-                             "or", "print", "quote",
+                             "or", "print", "quote", "while",
                              "integer?", "float?",
                              "number?", "string?", "symbol?",
                              "list?", "lambda?", "boolean?",
