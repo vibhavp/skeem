@@ -53,13 +53,14 @@ bool balanced(char *form)
   return (commas % 2 == 0) && (paren == 0);
 }
 
+#define get_input(i) {size_t __n__; getline(&(i), &__n__, stdin);}
+
 int main(int argc, char **argv)
 {
 #ifdef DEBUG
   setbuf(stdout, NULL);
 #endif
   char *input = NULL;
-  size_t n = 0;
 
   printf("skeem version %s\n", SKEEM_VERSION);
   mem_init();
@@ -71,12 +72,16 @@ int main(int argc, char **argv)
       clear_tokens();
       continue;
     }
-    
-    getline(&input, &n, stdin);
+    get_input(input);
+
+    if (input[0] == '\n')    
+      continue;
+
     scan(input, strlen(input));
+
     if (feof(stdin))
       break;
-    
+
     printf("=> ");
     fflush(stdout);
     

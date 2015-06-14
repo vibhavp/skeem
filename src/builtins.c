@@ -45,7 +45,7 @@ object_t *add(object_t *n1, object_t *n2)
         goto err;
     }
 
-  if (_FLOAT_P(n1)) {
+  else if (_FLOAT_P(n1)) {
     result = obj_init(FLOAT);
 
     if (_INTEGER_P(n2))
@@ -121,7 +121,7 @@ object_t *multiply(object_t *n1, object_t *n2)
         goto err;
     }
 
-  if (_FLOAT_P(n1)) {
+  else if (_FLOAT_P(n1)) {
     result = obj_init(FLOAT);
 
     if (_INTEGER_P(n2))
@@ -166,7 +166,19 @@ object_t *or(object_t *test1, object_t *test2)
 
 inline object_t *not(object_t *obj)
 {
-  return IS_TRUE(eval(obj)) ? CONST_TRUE : CONST_FALSE;
+  return IS_TRUE(eval(obj)) ? CONST_FALSE : CONST_TRUE;
+}
+
+/*Execute EXP while pred evaluates to true*/
+object_t *loop_while(object_t *pred, object_t *exp)
+{
+  object_t *last;
+
+  while (IS_TRUE(eval(pred))) {
+    last = eval(exp);
+  }
+
+  return last;
 }
 
 object_t *print(object_t *obj)
