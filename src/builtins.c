@@ -172,7 +172,7 @@ inline object_t *not(object_t *obj)
 /*Execute EXP while pred evaluates to true*/
 object_t *loop_while(object_t *pred, object_t *exp)
 {
-  object_t *last;
+  object_t *last = CONST_FALSE;
 
   while (IS_TRUE(eval(pred))) {
     last = eval(exp);
@@ -578,14 +578,14 @@ void builtins_init()
   for (int i = 0; i < BUILTIN_LEN; i++)
     builtin_syms[i] = tmp[i];
 
-  for (builtin_t i = AND; i <= QUOTE; i++) {
+  for (builtin_t i = AND; i <= WHILE; i++) {
     builtins[i] = ERR_MALLOC(sizeof(object_t));
     builtins[i]->type = BUILTIN;
     builtins[i]->builtin = i;
   }
 
   for(predicate_t i = INTEGER_P; i <= EQUAL_P; i++) {
-    int index = QUOTE+i+1;
+    int index = WHILE+i+1;
 
     builtins[index] = ERR_MALLOC(sizeof(object_t));
     builtins[index]->type = PREDICATE;
@@ -593,7 +593,7 @@ void builtins_init()
   }
 
   for (operator_t i = ADD; i <= MULTIPLY; i++) {
-    int index = QUOTE+EQUAL_P+i+2;
+    int index = WHILE+EQUAL_P+i+2;
 
     builtins[index] = ERR_MALLOC(sizeof(object_t));
     builtins[index]->type = OPERATOR;
