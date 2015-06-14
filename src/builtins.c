@@ -62,7 +62,7 @@ object_t *add(object_t *n1, object_t *n2)
   return result;
 
 err:
-  fprintf(stderr,"add: Wrong argument type(s)");
+  fprintf(stderr,"add: Wrong argument type(s)\n");
   goto_top();
 }
 
@@ -138,7 +138,7 @@ object_t *multiply(object_t *n1, object_t *n2)
   return result;
 
 err:
-  fprintf(stderr,"multiply: Wrong argument type(s)");
+  fprintf(stderr,"multiply: Wrong argument type(s)\n");
   goto_top();
 }
 
@@ -602,6 +602,9 @@ void builtins_init()
   CONST_TRUE->boolean = true;
 
   CONST_FALSE = ERR_MALLOC(sizeof(object_t));
+  CONST_FALSE->type = BOOLEAN;
+  CONST_FALSE->boolean = false;
+
   EMPTY_LIST = ERR_MALLOC(sizeof(object_t));
 
 #ifdef DEBUG

@@ -102,7 +102,7 @@ void print_obj(object_t *obj, FILE *stream)
       fprintf(stream, "%s", obj->string);
       break;
     case BOOLEAN:
-      fprintf(stream, obj->boolean ? "true" : "false");
+      fprintf(stream, obj->boolean ? "#t" : "#f");
       break;
     case LIST:
       {
