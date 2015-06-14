@@ -203,7 +203,7 @@ object_t *print(object_t *obj)
       goto_top();
   }
 
-  return obj;
+  return CONST_TRUE;
 }
 
 object_t *cons(object_t *obj1, object_t *obj2)
@@ -451,7 +451,6 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
     case LENGTH:
       correct_number_args("length", 1 , args);
       return obj_len(eval(args->car));
- 
     case NOT:
       correct_number_args("not", 1, args);
       return not(eval(args->car));
