@@ -188,6 +188,12 @@ object_t *token_to_obj(token_t *tok)
         if (strcmp(tok->string, builtin_syms[i]) == 0)
           return builtins[i];
       }
+      if (tok->string[1] != '\0' && tok->string[0] == '#') {
+        if (tok->string[1] == 't')
+          return CONST_TRUE;
+        else if (tok->string[1] == 'f')
+          return CONST_FALSE;
+      }
 
       obj = obj_init(SYMBOL);
       obj->string = tok->string;
