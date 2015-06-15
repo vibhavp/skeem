@@ -354,21 +354,33 @@ struct bind_tree *tree_lookup(struct bind_tree *tree, object_t *symbol)
   return tree == NULL ? NULL : tree;
 }
 
-inline object_t *env_lookup(object_t *symbol)
+object_t *env_lookup(object_t *symbol)
 {
   struct bind_tree *bind = NULL;
   object_t *cur = env_head->env->prev;
 
-  while (val == NULL && cur != NULL) {
+  while (bind == NULL && cur != NULL) {
     bind = tree_lookup(cur->env->tree, symbol);
     cur = cur->env->prev;
   }
   
   bind = bind == NULL ? tree_lookup(env_head->env->tree, symbol) : bind;
   
-  return bind == NULL ? NULL : bind;  
+  return bind == NULL ? NULL : bind->val;  
 }
 
+struct bind_tree *env_lookup_node(object_t *symbol)
+{
+  struct bind_tree *bind = NULL;
+  object_t *cur = env_head->env->prev;
+
+  while (bind == NULL && cur != NULL) {
+    bind = tree_lookup(cur->env->tree, symbol);
+    cur = cur->env->prev;
+  }
+
+  return bind == NULL ? tree_lookup(env_head->env->tree, symbol) : bind;
+}
 void print_obj_list(struct obj_list *list)
 {
   struct obj_list *curr = list;
