@@ -30,6 +30,16 @@
 bool no_gc;
 jmp_buf err;
 
+/*Binary tree for symbol table*/
+struct bind_tree {
+  object_t *symbol;
+  object_t *val;
+  struct bind_tree *root;
+  struct bind_tree *parent;
+  struct bind_tree *left;
+  struct bind_tree *right;
+};
+
 extern cons_t *cons_init();
 extern void cons_free(cons_t *cell);
 extern object_t *obj_init(type_t type);

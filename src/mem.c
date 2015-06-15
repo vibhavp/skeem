@@ -34,16 +34,6 @@ struct obj_list {
   struct obj_list *prev;
 };
 
-/*Binary tree for symbol table*/
-struct bind_tree {
-  object_t *symbol;
-  object_t *val;
-  struct bind_tree *root;
-  struct bind_tree *parent;
-  struct bind_tree *left;
-  struct bind_tree *right;
-};
-
 struct env {
   struct bind_tree *tree;
   object_t *next;
