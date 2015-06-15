@@ -248,6 +248,21 @@ object_t *cond(cons_t *clauses)
   return CONST_TRUE;
 }
 
+object_t *set(object_t *sym, object_t *val)
+{
+  if (_SYMBOL_P(sym)) {
+    struct bind_tree *bind = env_lookup_node(sym);
+
+    if (bind == NULL) {
+      fprintf(stderr, "Unbound variable: %s\n", sym->string);
+      goto_top();
+    }
+    bind->val = val;
+  }
+
+  return val;
+}
+
 object_t *define(object_t *sym, object_t *val)
 {
   if (_SYMBOL_P(sym))
