@@ -345,9 +345,9 @@ inline void env_insert(object_t *symbol, object_t *val)
   tree_insert(env_head->env->prev->env->tree, symbol, val);
 }
 
-object_t *tree_lookup(struct bind_tree *tree, object_t *symbol)
+struct bind_tree *tree_lookup(struct bind_tree *tree, object_t *symbol)
 {
-  if (tree->symbol == NULL) /*No symbol in */
+  if (tree->symbol == NULL) /*tree is empty*/
     return NULL;
 
   int diff = strcmp(symbol->string, tree->symbol->string);
@@ -361,20 +361,22 @@ object_t *tree_lookup(struct bind_tree *tree, object_t *symbol)
       tree = tree->right;
   }
 
-  return tree == NULL ? NULL : tree->val;
+  return tree == NULL ? NULL : tree;
 }
 
 inline object_t *env_lookup(object_t *symbol)
 {
-  object_t *val = NULL;
+  struct bind_tree *bind = NULL;
   object_t *cur = env_head->env->prev;
 
   while (val == NULL && cur != NULL) {
-    val = tree_lookup(cur->env->tree, symbol);
+    bind = tree_lookup(cur->env->tree, symbol);
     cur = cur->env->prev;
   }
   
-  return val != NULL ? val : tree_lookup(env_head->env->tree, symbol);
+  bind = bind == NULL ? tree_lookup(env_head->env->tree, symbol) : bind;
+  
+  return bind == NULL ? NULL : bind;  
 }
 
 void print_obj_list(struct obj_list *list)
