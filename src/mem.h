@@ -53,7 +53,7 @@ extern void env_push();
 extern void env_pop();
 extern void goto_top();
 extern void env_insert(struct _object_t *sym, struct _object_t *val);
-extern struct bind_tree *tree_lookup(struct bind_tree *tree, struct _object_t *symbol);
+extern struct bind_tree *env_lookup_node(object_t *symbol);
 extern struct _object_t *env_lookup(struct _object_t *sym);
 extern void gc();
 
