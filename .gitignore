@@ -4,4 +4,6 @@ GPATH
 GRTAGS
 *TAGS
 *.out
+*.exe
+*.stackdump
 skeem
