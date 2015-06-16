@@ -526,7 +526,7 @@ object_t *apply(object_t *function, cons_t *args)
         correct_number_args("lambda", length(parameters), args);
 
         while (parameters != NULL) {
-          env_insert(parameters->car, args_head->car);
+          env_insert(parameters->car, eval(args_head->car));
           args_head = args_head->cdr;
           parameters = parameters->cdr;
         }
