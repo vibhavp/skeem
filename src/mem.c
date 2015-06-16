@@ -381,6 +381,7 @@ struct bind_tree *env_lookup_node(object_t *symbol)
 
   return bind == NULL ? tree_lookup(env_head->env->tree, symbol) : bind;
 }
+
 void print_obj_list(struct obj_list *list)
 {
   struct obj_list *curr = list;

@@ -514,6 +514,7 @@ object_t *apply(object_t *function, cons_t *args)
       function = eval(function);
       return apply(function, args);
     case LIST:
+      env_push();
       if (function->cell->car->builtin == LAMBDA) {
         /*Parameters in the lambda's "signature"*/
         cons_t *parameters = function->cell->cdr->car->cell;
@@ -535,6 +536,7 @@ object_t *apply(object_t *function, cons_t *args)
           body = body->cdr;
         }
         /*Reached the end of function.*/
+        env_pop();
         return eval(body->car);
       }
     default:
