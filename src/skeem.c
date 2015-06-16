@@ -85,7 +85,7 @@ input:
 
     if (feof(stdin))
       break;
-    
+
     if (nquotes % 2 != 0 || paren_depth != 0) {
       printf("... ");
       fflush(stdout);
