@@ -520,7 +520,7 @@ object_t *apply(object_t *function, cons_t *args)
         /*Arguments passed to the lambda*/
         cons_t *args_head = args;
         /*The lambda's body */
-        cons_t *body = function->cell->cdr->cdr->car->cell;
+        cons_t *body = function->cell->cdr->cdr;
 
         correct_number_args("lambda", length(parameters), args);
 
@@ -555,9 +555,10 @@ object_t *eval(object_t *obj)
     case LIST:
       {
         obj->marked = true;
-        env_push();
+        
         if (obj->cell->car->type == BUILTIN && obj->cell->car->builtin == LAMBDA)
           return correct_number_args("lambda", 2, obj->cell->cdr), obj;
+        env_push();
 
         object_t *val = apply(obj->cell->car, obj->cell->cdr);
         env_pop();
