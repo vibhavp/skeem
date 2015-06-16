@@ -238,9 +238,11 @@ void scan(char *str, size_t limit)
         word_index = 0;
         continue;
       case '(':
+        paren_depth++;
         add_token("(");
         continue;
       case ')':
+        paren_depth--;
         if (str[i-1] != ' ') {
           word[word_index] = '\0';
           if (word[0] != '\0')
@@ -256,7 +258,10 @@ void scan(char *str, size_t limit)
           word_index = 0;
           break;
         }
+        break;
       default:
+        if (str[i] == '"')
+          nquotes++;
         word[word_index++] = str[i];
     }
   }

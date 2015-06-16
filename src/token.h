@@ -25,8 +25,8 @@
 #include "types.h"
 #include <stddef.h>
 
-unsigned int ntok;
-unsigned int depth;
+unsigned int paren_depth;
+unsigned int nquotes;
 
 extern void scan(char *str, size_t limit);
 extern object_t *tokens_to_obj();

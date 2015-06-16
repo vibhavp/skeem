@@ -66,12 +66,16 @@ int main(int argc, char **argv)
   mem_init();
   builtins_init();
 
+  paren_depth = 0;
+  nquotes = 0;
+
   while (true) {
     printf("skeem> ");
     if (setjmp(err)) {
       clear_tokens();
       continue;
     }
+input:
     get_input(input);
 
     if (input[0] == '\n')    
@@ -81,13 +85,21 @@ int main(int argc, char **argv)
 
     if (feof(stdin))
       break;
-
-    printf("=> ");
-    fflush(stdout);
     
+    if (nquotes % 2 != 0 || paren_depth != 0) {
+      printf("... ");
+      fflush(stdout);
+      goto input;
+    }
+
     register object_t *obj = tokens_to_obj();
     no_gc = false;
-    print_obj(eval(obj), stdout);
+    obj = eval(obj);
+    
+    printf("\n=> ");
+    fflush(stdout);
+
+    print_obj(obj, stdout);
     putchar('\n');
 
     clear_tokens();
