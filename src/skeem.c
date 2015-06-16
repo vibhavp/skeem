@@ -85,7 +85,11 @@ input:
 
     if (feof(stdin))
       break;
-
+    if (paren_depth < 0) {
+      fprintf(stderr, "Unbalanced expression\n");
+      paren_depth = 0;
+      longjmp(err, 1);
+    }
     if (nquotes % 2 != 0 || paren_depth != 0) {
       printf("... ");
       fflush(stdout);
