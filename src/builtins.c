@@ -523,6 +523,9 @@ object_t *apply(object_t *function, cons_t *args)
         /*The lambda's body */
         cons_t *body = function->cell->cdr->cdr;
 
+        if (_LIST_P(body->car) && _LIST_P(body->car->cell->car))
+          body = body->car->cell;
+
         correct_number_args("lambda", length(parameters), args);
 
         while (parameters != NULL) {
