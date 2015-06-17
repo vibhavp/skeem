@@ -208,12 +208,11 @@ void mark(object_t *obj)
   obj->marked = true;
 
   if (obj->type == LIST) {
-    cons_t *head = obj->cell->cdr;
-    mark(obj->cell->car);
+    cons_t *cur = obj->cell;
 
-    if (head != NULL) {
-      mark(head->car);
-      head = head->cdr;
+    while (cur != NULL) {
+      mark(cur->car);
+      cur = cur->cdr;
     }
   }
 }
