@@ -485,6 +485,9 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
     case PRINT:
       correct_number_args("print", 1, args);
       return print(eval(args->car));
+    case SET:
+      correct_number_args("set", 2, args);
+      return set(args->car, eval(args->cdr->car));
     case WHILE:
       correct_number_args("while", 2, args);
       return loop_while(eval(args->car), args->cdr->car);
@@ -531,8 +534,7 @@ object_t *apply(object_t *function, cons_t *args)
         while (parameters != NULL) {
           env_insert(parameters->car, eval(args_head->car));
           args_head = args_head->cdr;
-          parameters = parameters->cdr;
-        }
+          parameters = parameters->cdr;        }
 
         while (body->cdr != NULL) {
           eval(body->car);
@@ -599,7 +601,7 @@ void builtins_init()
                              "cons", "define", "eval",
                              "exit", "garbage-collect",
                              "lambda", "length", "not",
-                             "or", "print", "quote", "while",
+                             "or", "print", "quote", "set", "while",
                              "integer?", "float?",
                              "number?", "string?", "symbol?",
                              "list?", "lambda?", "boolean?",
