@@ -334,7 +334,7 @@ inline void env_insert(object_t *symbol, object_t *val)
   tree_insert(env_head->env->prev->env->tree, symbol, val);
 }
 
-inline void args_insert(object_t *symbol, object_t *val)
+inline void arg_insert(object_t *symbol, object_t *val)
 {
   tree_insert(env_head->env->tree, symbol, val);
 }
