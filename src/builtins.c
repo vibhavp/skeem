@@ -419,6 +419,20 @@ object_t *obj_len(object_t *obj)
   return len;
 }
 
+#if defined(__GNUC__) && __GNUC__ > 4 && __GNUC_MINOR__ > 6
+_Noreturn
+#endif
+
+void exit_status(object_t *status)
+{
+  if (_INTEGER_P(status))
+    exit(status->integer);
+
+  fprintf(stderr, "Wrong argument type - %s. (Expected integer)",
+          strtype(status->type));
+  goto_top();
+}
+
 static object_t *call_builtin(builtin_t builtin, cons_t *args)
 {
   switch(builtin) {
@@ -441,9 +455,10 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
       correct_number_args("eval", 1, args);
       return eval(args->car);
     case EXIT:
-      correct_number_args("exit", 0, args);
-      printf("Exiting\n");
-      exit(EXIT_SUCCESS);
+      if (length(args) == 0)
+        exit(EXIT_SUCCESS);
+      correct_number_args("exit", 1, args);
+      exit_status(args->car);
     case GC:
       correct_number_args("garbage-collect", 0, args);
       gc();
