@@ -541,16 +541,15 @@ object_t *eval(object_t *obj)
   {
     case LIST:
       {
-        obj->marked = true;
+        mark(obj);
         
         if (obj->cell->car->type == BUILTIN && obj->cell->car->builtin == LAMBDA)
           return correct_number_args("lambda", 2, obj->cell->cdr), obj;
-        env_push();
 
+        env_push();
         object_t *val = apply(obj->cell->car, obj->cell->cdr);
         env_pop();
 
-        obj->marked = false;
         return val;
       }
     case SYMBOL:
