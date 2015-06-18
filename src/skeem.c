@@ -31,28 +31,6 @@
 #include <setjmp.h>
 
 #define SKEEM_VERSION "1.0a"
-bool balanced(char *form)
-{
-  unsigned int commas = 0, paren = 0;
-
-  while (*form) {
-    switch(*form++)
-    {
-      case '\"':
-        commas++;
-        break;
-      case '(':
-        paren++;
-        break;
-      case ')':
-        paren--;
-        break;
-    }
-  }
-
-  return (commas % 2 == 0) && (paren == 0);
-}
-
 #define get_input(i) {size_t __n__; getline(&(i), &__n__, stdin);}
 
 int main(int argc, char **argv)
