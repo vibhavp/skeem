@@ -334,6 +334,11 @@ inline void env_insert(object_t *symbol, object_t *val)
   tree_insert(env_head->env->prev->env->tree, symbol, val);
 }
 
+inline void args_insert(object_t *symbol, object_t *val)
+{
+  tree_insert(env_head->env->tree, symbol, tree);
+}
+
 struct bind_tree *tree_lookup(struct bind_tree *tree, object_t *symbol)
 {
   if (tree->symbol == NULL) /*tree is empty*/
