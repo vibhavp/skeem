@@ -56,6 +56,7 @@ extern void env_insert(struct _object_t *sym, struct _object_t *val);
 extern void arg_insert(struct _object_t *sym, struct _object_t *val);
 extern struct bind_tree *env_lookup_node(object_t *symbol);
 extern struct _object_t *env_lookup(struct _object_t *sym);
+extern struct _object_t *arg_lookup(struct _object_t *sym);
 extern void gc();
 extern void mark();
 
