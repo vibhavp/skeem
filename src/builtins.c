@@ -218,34 +218,12 @@ object_t *cons(object_t *obj1, object_t *obj2)
   return cons;
 }
 
-/*(cond                                     _
-  (                                          |
-  ((cond1) (body)) <- clauses->car->cell     |
-  ((cond2) (body)) <- clauses->cdr->car->cell| <- clauses
-  )                                          |
-  )                                         -
- */
-object_t *cond(cons_t *clauses)
+object_t *if_else(object_t *pred, object_t *exp1, object_t *exp2)
 {
-  cons_t *curr_cell = clauses, *clause;
-  object_t *val;
-  int clause_no = 1;
+  if (IS_TRUE(eval(pred)))
+    return eval(exp1);
 
-  do {
-    clause = curr_cell->car->cell;
-    val = eval(clause->car);
-    /*Evaluate body if clause condition doesnt evaluate to #f*/
-    if (IS_FALSE(val)) {
-      if (clause->cdr == NULL) {
-        fprintf(stderr, "No consequent for clause %d", clause_no);
-        goto_top();
-      }
-      return eval(clause->cdr->car);
-    }
-    curr_cell = curr_cell->cdr;
-  }while(curr_cell != NULL);
-
-  return CONST_TRUE;
+  return eval(exp2);
 }
 
 object_t *set(object_t *sym, object_t *val)
@@ -470,9 +448,11 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
       correct_number_args("garbage-collect", 0, args);
       gc();
       return CONST_TRUE;
-    case COND:
-      correct_number_args("cond", 1, args);
-      return cond(args);
+    case IF:
+      if (length(args) == 2)
+        return if_else(args->car, args->cdr->car, CONST_FALSE);
+      correct_number_args("cond", 3, args);
+      return if_else(args->car, args->cdr->car, args->cdr->cdr->car);
     case LENGTH:
       correct_number_args("length", 1 , args);
       return obj_len(eval(args->car));
@@ -597,9 +577,9 @@ char *builtin_syms[BUILTIN_LEN];
 /*Initialize all builtins, including procedures, predicates, and operators*/
 void builtins_init()
 {
-  char *tmp[BUILTIN_LEN] =  {"and", "car", "cdr", "cond",
+  char *tmp[BUILTIN_LEN] =  {"and", "car", "cdr",
                              "cons", "define", "eval",
-                             "exit", "garbage-collect",
+                             "exit", "garbage-collect", "if",
                              "lambda", "length", "not",
                              "or", "print", "quote", "set", "while",
                              "integer?", "float?",
