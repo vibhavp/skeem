@@ -513,7 +513,8 @@ object_t *apply(object_t *function, cons_t *args)
         while (parameters != NULL) {
           env_insert(parameters->car, eval(args_head->car));
           args_head = args_head->cdr;
-          parameters = parameters->cdr;        }
+          parameters = parameters->cdr;
+        }
 
         while (body->cdr != NULL) {
           eval(body->car);

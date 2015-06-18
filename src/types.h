@@ -111,7 +111,6 @@ typedef struct cons {
   struct cons *cdr;
 } cons_t;
 
-
 extern cons_t *tok_to_cons(char **tokens, char *types, int *index);
 extern char *strpred(predicate_t pred);
 extern char *strop(operator_t op);
