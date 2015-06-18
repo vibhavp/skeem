@@ -358,10 +358,10 @@ struct bind_tree *tree_lookup(struct bind_tree *tree, object_t *symbol)
   return tree == NULL ? NULL : tree;
 }
 
-object_t *env_lookup(object_t *symbol)
+object_t *_env_lookup(object_t *symbol, bool prev)
 {
   struct bind_tree *bind = NULL;
-  object_t *cur = env_head->env->prev;
+  object_t *cur = prev ? : env_head->env->prev : env_head;
 
   while (bind == NULL && cur != NULL) {
     bind = tree_lookup(cur->env->tree, symbol);
@@ -371,6 +371,11 @@ object_t *env_lookup(object_t *symbol)
   bind = bind == NULL ? tree_lookup(env_head->env->tree, symbol) : bind;
   
   return bind == NULL ? NULL : bind->val;  
+}
+
+inline object_t *env_lookup(object_t *symbol)
+{
+  return _env_lookup(symbol, false);
 }
 
 struct bind_tree *env_lookup_node(object_t *symbol)
