@@ -240,8 +240,10 @@ void scan(char *str, size_t limit)
       case ' ':
         if (str[i+1] == ' ')
           continue;
-        if (in_string)
-          word[word_index++] = str[i];
+        if (in_string) {
+            word[word_index++] = str[i];
+            continue;
+        }
         word[word_index] = '\0';
         add_token(word);
         word_index = 0;
