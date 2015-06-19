@@ -7,7 +7,7 @@ FLAGS = -std=gnu1x $(CFLAGS)
 DEBUGFLAGS = -g -DDEBUG $(FLAGS)
 RELEASEFLAGS = -O2 $(FLAGS)
 
-default: release
+default: release tests
 
 %.o: %.c
 	$(CC) $(RELEASEFLAGS) -c $< -o $@
@@ -23,6 +23,8 @@ debug: $(DOBJS) skeem.do
 release: $(OBJS) skeem.o
 	$(CC) $(RELEASEFLAGS) $(OBJS) skeem.o -o skeem
 
+tests: skeem
+	./skeem tests/1.scm
 clean:
 	rm -f *.o *.do
 	rm -f skeem
