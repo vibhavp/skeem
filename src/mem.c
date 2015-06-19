@@ -351,7 +351,7 @@ struct bind_tree *tree_lookup(struct bind_tree *tree, object_t *symbol)
                       
     if (diff < 0)
       tree = tree->left;
-    else
+    else if (diff > 0)
       tree = tree->right;
   }
 
