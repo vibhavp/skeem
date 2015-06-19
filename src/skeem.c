@@ -31,7 +31,7 @@
 #include <setjmp.h>
 
 #define SKEEM_VERSION "1.0a"
-#define get_input(i) {size_t __n__; getline(&(i), &__n__, stdin);}
+#define get_input(i) {size_t __n__; getline(&(i), &__n__, stream);}
 
 int main(int argc, char **argv)
 {
@@ -39,8 +39,15 @@ int main(int argc, char **argv)
   setbuf(stdout, NULL);
 #endif
   char *input = NULL;
+  FILE *stream = argc > 1 ? fopen(argv[1], "r") : stdin;
 
-  printf("skeem version %s\n", SKEEM_VERSION);
+  if (stream == NULL) {
+    perror("fopen");
+    exit(EXIT_FAILURE);
+  }
+
+  if (stream == stdin)
+    printf("skeem version %s\n", SKEEM_VERSION);
   mem_init();
   builtins_init();
 
@@ -48,8 +55,13 @@ int main(int argc, char **argv)
   nquotes = 0;
 
   while (true) {
-    printf("skeem> ");
+    if (stream == stdin)
+      printf("skeem> ");
+
     if (setjmp(err)) {
+      if (stream != stdin)
+        exit(EXIT_FAILURE);
+
       clear_tokens();
       continue;
     }
@@ -69,8 +81,10 @@ input:
       longjmp(err, 1);
     }
     if (nquotes % 2 != 0 || paren_depth != 0) {
-      printf("... ");
-      fflush(stdout);
+      if (stream == stdin) {
+          printf("... ");
+          fflush(stdout);
+      }
       goto input;
     }
 
@@ -78,13 +92,16 @@ input:
     no_gc = false;
     obj = eval(obj);
     
-    printf("\n=> ");
-    fflush(stdout);
-
-    print_obj(obj, stdout);
-    putchar('\n');
+    if (stream == stdin) {
+      printf("\n=> ");
+      fflush(stdout);
+      print_obj(obj, stdout);
+      putchar('\n');
+    }
 
     clear_tokens();
+    if (feof (stream))
+      break;
   }
 
   return 0;
