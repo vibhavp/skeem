@@ -231,10 +231,11 @@ void scan(char *str, size_t limit)
   for (size_t i = 0; i < limit; i++) {
     switch(str[i]) {
       case ' ':
-        if (str[i-1] == ' ' || head_tok->type == TOK_PAREN_CLOSE)
+        if (str[i+1] == ' ')
           continue;
         word[word_index] = '\0';
-        add_token(word);
+        if (word[0] != '\0')
+          add_token(word);
         word_index = 0;
         continue;
       case '(':
