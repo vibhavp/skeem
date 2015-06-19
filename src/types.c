@@ -56,6 +56,9 @@ char *strtype(type_t type)
 
 int length(cons_t *list)
 {
+  if (list == NULL)
+    return 0;
+
   int len = 0;
   cons_t *head = list;
 
@@ -106,6 +109,11 @@ void print_obj(object_t *obj, FILE *stream)
       break;
     case LIST:
       {
+        if (obj == EMPTY_LIST) {
+          fprintf(stream, "()");
+          return;
+        }
+
         fprintf(stream, "(");
         cons_t *cur = obj->cell;
 
