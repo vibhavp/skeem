@@ -1,4 +1,5 @@
-(define assert (lambda (x) (if (not x) (exit 1) (print "ok "))))
+(define (assert x) (if (not x)
+						(exit 1)))
 (assert (equal? 1 1))
 (assert (equal? 2 (+ 1 1)))
 (assert (equal? 0 (- 1 1)))
