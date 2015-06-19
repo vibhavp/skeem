@@ -346,7 +346,7 @@ struct bind_tree *tree_lookup(struct bind_tree *tree, object_t *symbol)
   int diff;
 
   while (tree != NULL && (diff = strcmp(symbol->string, tree->symbol->string))
-                         != 0) {                    
+                         != 0) {       
     if (diff < 0)
       tree = tree->left;
     else if (diff > 0)
