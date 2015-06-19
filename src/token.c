@@ -56,6 +56,7 @@ typedef struct _token {
 } token_t;
 
 static token_t *tokens, *head_tok, *list_end;
+static bool in_string;
 
 object_t *token_to_obj(token_t *tok);
 
@@ -239,6 +240,8 @@ void scan(char *str, size_t limit)
       case ' ':
         if (str[i+1] == ' ')
           continue;
+        if (in_string)
+          word[word_index++] = str[i];
         word[word_index] = '\0';
         add_token(word);
         word_index = 0;
@@ -267,8 +270,10 @@ void scan(char *str, size_t limit)
       case '\r': /*DOS line ending stuff*/
         return;
       default:
-        if (str[i] == '"')
+        if (str[i] == '"') {
+          in_string = !in_string;
           nquotes++;
+        }
         word[word_index++] = str[i];
     }
   }
