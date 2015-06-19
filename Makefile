@@ -4,7 +4,7 @@ debug:
 	cd src; make debug
 
 release:
-	cd src; make release
+	cd src; make
 
 tests:
 	cd src; make tests
