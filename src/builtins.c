@@ -541,6 +541,7 @@ object_t *apply(object_t *function, cons_t *args)
     default:
       fprintf(stderr, "Invalid Function: ");
       print_obj(function, stderr);
+      fprintf(stderr, "\n");
       goto_top();
   }
 }
