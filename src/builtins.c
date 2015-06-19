@@ -244,20 +244,23 @@ object_t *set(object_t *sym, object_t *val)
 object_t *define(object_t *sym, object_t *val)
 {
   if (_SYMBOL_P(sym))
-    env_insert(sym, val);
+    env_insert(sym, eval(val));
 
   else if (_LIST_P(sym)) { /*defining a function*/
-    object_ *func = obj_init(LIST);
+    object_t *func = obj_init(LIST);
     func->cell = cons_init();
     func->cell->car = builtins[LAMBDA];
-    func->cell->cdr = sym->cell->cdr == NULL ? EMPTY_LIST : sym->cell->cdr;
 
-    if (!_LIST_P(val)) {
-      fprintf(stderr, "Wrong argument type - %s (needed list)\n", strtype(val->type));
-      goto_top();
-    }
-
-    func->cell->cdr->cdr = val->cell;
+    func->cell->cdr = cons_init();
+    if (sym->cell->cdr == NULL) /*No parameters*/
+      func->cell->cdr->car = EMPTY_LIST;
+    else
+      func->cell->cdr->car = obj_init(LIST);
+      func->cell->cdr->car->cell = sym->cell->cdr;
+    
+    func->cell->cdr->cdr = cons_init();
+    func->cell->cdr->cdr->car = obj_init(LIST);
+    func->cell->cdr->cdr->car->cell = val->cell;
     env_insert(sym->cell->car, func);
   }
 
@@ -466,7 +469,7 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args)
       return cons(args->car, args->cdr->car);
     case DEFINE:
       correct_number_args("define", 2, args);
-      return define(args->car, eval(args->cdr->car));
+      return define(args->car, args->cdr->car);
     case EVAL:
       correct_number_args("eval", 1, args);
       return eval(args->car);
