@@ -575,6 +575,9 @@ object_t *eval(object_t *obj)
   {
     case LIST:
       {
+        if (obj == EMPTY_LIST)
+          return EMPTY_LIST;
+
         mark(obj);
         
         if (obj->cell->car->type == BUILTIN && obj->cell->car->builtin == LAMBDA)
@@ -653,6 +656,7 @@ void builtins_init()
   CONST_FALSE->boolean = false;
 
   EMPTY_LIST = ERR_MALLOC(sizeof(object_t));
+  EMPTY_LIST->type = LIST;
 
 #ifdef DEBUG
   printf("Initialised builtins\n");

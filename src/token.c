@@ -199,8 +199,10 @@ object_t *token_to_obj(token_t *tok)
       obj->string = tok->string;
       return obj;
     case TOK_PAREN_OPEN:
-      if (tok->next->type == TOK_PAREN_CLOSE)
+      if (tok->next->type == TOK_PAREN_CLOSE) {
+        list_end = tok->next;
         return EMPTY_LIST;
+      }
       obj = obj_init(LIST);
       obj->cell = token_to_cons(tok->next);
       return obj;
@@ -235,7 +237,7 @@ void scan(char *str, size_t limit)
           continue;
         word[word_index] = '\0';
         if (word[0] != '\0')
-          add_token(word);
+        add_token(word);
         word_index = 0;
         continue;
       case '(':
