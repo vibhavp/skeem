@@ -3,4 +3,4 @@ language: c
 compiler:
   - gcc
   - clang
-script: make release
+script: make
