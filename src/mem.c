@@ -346,13 +346,12 @@ struct bind_tree *tree_lookup(struct bind_tree *tree, object_t *symbol)
 
   int diff = strcmp(symbol->string, tree->symbol->string);
 
-  while (tree != NULL && diff != 0) {
-    int diff = strcmp(symbol->string, tree->symbol->string);
-                      
+  while (tree != NULL && diff != 0) {                    
     if (diff < 0)
       tree = tree->left;
     else if (diff > 0)
       tree = tree->right;
+    diff = strcmp(symbol->string, tree->symbol->string);
   }
 
   return tree == NULL ? NULL : tree;
