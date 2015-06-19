@@ -262,6 +262,8 @@ void scan(char *str, size_t limit)
           break;
         }
         break;
+      case '\r': /*DOS line ending stuff*/
+        return;
       default:
         if (str[i] == '"')
           nquotes++;
