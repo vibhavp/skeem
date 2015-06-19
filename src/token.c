@@ -271,6 +271,8 @@ void scan(char *str, size_t limit)
         break;
       case '\r': /*DOS line ending stuff*/
         return;
+      case '\t':
+        continue;
       default:
         if (str[i] == '"') {
           in_string = !in_string;
