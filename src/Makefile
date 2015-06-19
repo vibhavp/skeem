@@ -23,7 +23,7 @@ debug: $(DOBJS) skeem.do
 release: $(OBJS) skeem.o
 	$(CC) $(RELEASEFLAGS) $(OBJS) skeem.o -o skeem
 
-tests: skeem
+tests: $(OBJS) skeem.o skeem
 	./skeem tests/1.scm
 clean:
 	rm -f *.o *.do
