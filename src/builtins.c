@@ -258,10 +258,13 @@ object_t *define(object_t *sym, object_t *val)
       func->cell->cdr->car = obj_init(LIST);
       func->cell->cdr->car->cell = sym->cell->cdr;
     
+    
     func->cell->cdr->cdr = cons_init();
     func->cell->cdr->cdr->car = obj_init(LIST);
     func->cell->cdr->cdr->car->cell = val->cell;
     env_insert(sym->cell->car, func);
+
+    return func;
   }
 
   else {
