@@ -89,6 +89,8 @@ input:
     }
 
     register object_t *obj = tokens_to_obj();
+    if (obj == NULL)
+      continue;
     no_gc = false;
     obj = eval(obj);
     

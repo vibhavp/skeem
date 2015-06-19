@@ -138,6 +138,8 @@ token_t *str_to_tok(char *word)
 
 void add_token(char *str)
 {
+  if (str[0] == '\0')
+    return;
   if (tokens == NULL) {
     tokens = str_to_tok(str);
     head_tok = tokens;
@@ -220,8 +222,10 @@ object_t *token_to_obj(token_t *tok)
   }
 }
 
-object_t *tokens_to_obj()
+inline object_t *tokens_to_obj()
 {
+  if (tokens == NULL)
+    return NULL;
   return token_to_obj(tokens);
 }
 
@@ -236,7 +240,6 @@ void scan(char *str, size_t limit)
         if (str[i+1] == ' ')
           continue;
         word[word_index] = '\0';
-        if (word[0] != '\0')
         add_token(word);
         word_index = 0;
         continue;
@@ -248,8 +251,7 @@ void scan(char *str, size_t limit)
         paren_depth--;
         if (str[i-1] != ' ') {
           word[word_index] = '\0';
-          if (word[0] != '\0')
-            add_token(word);
+          add_token(word);
           word_index = 0;
         }
         add_token(")");
