@@ -441,7 +441,7 @@ object_t *obj_len(object_t *obj)
   return len;
 }
 
-#if defined(__GNUC__) && __GNUC__ > 4 && __GNUC_MINOR__ > 6
+#if GCC_VERSION > 40600
 _Noreturn
 #endif
 

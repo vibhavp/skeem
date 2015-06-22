@@ -445,7 +445,7 @@ inline void env_pop()
   env_head->env->next = NULL;
 }
 
-#if (__GNUC__ >= 4 && __GNUC_MINOR > 6) || defined(__clang__)
+#if GCC_VERSION > 40600
 _Noreturn
 #endif
 void goto_top()
