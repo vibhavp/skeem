@@ -441,7 +441,7 @@ object_t *obj_len(object_t *obj)
   return len;
 }
 
-#if GCC_VERSION > 40600
+#if GCC_VERSION > 40900
 _Noreturn
 #endif
 

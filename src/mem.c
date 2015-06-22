@@ -445,7 +445,7 @@ inline void env_pop()
   env_head->env->next = NULL;
 }
 
-#if GCC_VERSION > 40600
+#if GCC_VERSION >= 40900
 _Noreturn
 #endif
 void goto_top()
