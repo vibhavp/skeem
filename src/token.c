@@ -60,37 +60,32 @@ static bool in_string;
 
 object_t *token_to_obj(token_t *tok);
 
-enum tok_type type(char *word, size_t start)
-{
+enum tok_type type(char *word, size_t start) {
   enum tok_type sub;
 
-  switch(word[start]) {
+  switch (word[start]) {
     case '+':
-      if (word[start+1] != '\0') {
-        sub = type(word, start+1);
+      if (word[start + 1] != '\0') {
+        sub = type(word, start + 1);
         return sub == TOK_FLOAT || sub == TOK_INT ? sub : TOK_SYMBOL;
       }
       return TOK_OPERATOR_PLUS;
     case '-':
-      if (word[start+1] != '\0') {
-        sub = type(word, start+1);
-          return sub == TOK_FLOAT || sub == TOK_INT ? sub : TOK_SYMBOL;
+      if (word[start + 1] != '\0') {
+        sub = type(word, start + 1);
+        return sub == TOK_FLOAT || sub == TOK_INT ? sub : TOK_SYMBOL;
       }
       return TOK_OPERATOR_MINUS;
     case '*':
-      if (word[start+1] != '\0')
-        return TOK_SYMBOL;
+      if (word[start + 1] != '\0') return TOK_SYMBOL;
       return TOK_OPERATOR_MULTIPLY;
-    case'/':
-      if (word[start+1] != '\0')
-        return TOK_SYMBOL;
+    case '/':
+      if (word[start + 1] != '\0') return TOK_SYMBOL;
       return TOK_OPERATOR_DIVIDE;
-    case '0'...'9':
+    case '0' ... '9':
       for (size_t i = start; i < strlen(word); i++) {
-
         if (!(word[i] >= '0' && word[i] <= '9')) {
-          if (word[i] == '.' && type(word, i+1) == TOK_INT)
-            return TOK_FLOAT;
+          if (word[i] == '.' && type(word, i + 1) == TOK_INT) return TOK_FLOAT;
           return TOK_SYMBOL;
         }
       }
@@ -106,27 +101,24 @@ enum tok_type type(char *word, size_t start)
   }
 }
 
-token_t *str_to_tok(char *word)
-{
+token_t *str_to_tok(char *word) {
   token_t *tok = ERR_MALLOC(sizeof(token_t));
   tok->type = type(word, 0);
   tok->next = NULL;
 
-  switch(tok->type)
-  {
+  switch (tok->type) {
     case TOK_INT:
       tok->integer = atoi(word);
       return tok;
     case TOK_FLOAT:
       tok->flt = atof(word);
       return tok;
-    case TOK_STRING:
-      {
+    case TOK_STRING: {
       /*Subtract 2 for the commas*/
-        size_t size = (strlen(word) - 2)*sizeof(char);
-        tok->string = malloc(size);
-        strncpy(tok->string, word+1, size);
-      }
+      size_t size = (strlen(word) - 2) * sizeof(char);
+      tok->string = malloc(size);
+      strncpy(tok->string, word + 1, size);
+    }
       return tok;
     case TOK_SYMBOL:
       tok->string = strdup(word);
@@ -137,38 +129,31 @@ token_t *str_to_tok(char *word)
   return NULL;
 }
 
-void add_token(char *str)
-{
-  if (str[0] == '\0')
-    return;
+void add_token(char *str) {
+  if (str[0] == '\0') return;
   if (tokens == NULL) {
     tokens = str_to_tok(str);
     head_tok = tokens;
-  }
-  else {
+  } else {
     head_tok->next = str_to_tok(str);
     head_tok = head_tok->next;
   }
 }
 
-cons_t *token_to_cons(token_t *tok)
-{
+cons_t *token_to_cons(token_t *tok) {
   object_t *obj = token_to_obj(tok);
   cons_t *cell;
-  
-  if (obj == NULL)
-    return NULL;
-  if (obj->type == LIST)
-    tok = list_end;
-  
+
+  if (obj == NULL) return NULL;
+  if (obj->type == LIST) tok = list_end;
+
   cell = cons_init();
   cell->car = obj;
   cell->cdr = token_to_cons(tok->next);
   return cell;
 }
 
-object_t *token_to_obj(token_t *tok)
-{
+object_t *token_to_obj(token_t *tok) {
   object_t *obj;
   no_gc = true;
 
@@ -188,8 +173,7 @@ object_t *token_to_obj(token_t *tok)
     case TOK_SYMBOL:
       /*Check if symbol is a builtin*/
       for (int i = 0; i < BUILTIN_LEN; i++) {
-        if (strcmp(tok->string, builtin_syms[i]) == 0)
-          return builtins[i];
+        if (strcmp(tok->string, builtin_syms[i]) == 0) return builtins[i];
       }
       if (tok->string[1] != '\0' && tok->string[0] == '#') {
         if (tok->string[1] == 't')
@@ -223,26 +207,22 @@ object_t *token_to_obj(token_t *tok)
   }
 }
 
-inline object_t *tokens_to_obj()
-{
-  if (tokens == NULL)
-    return NULL;
+inline object_t *tokens_to_obj() {
+  if (tokens == NULL) return NULL;
   return token_to_obj(tokens);
 }
 
-void scan(char *str, size_t limit)
-{
+void scan(char *str, size_t limit) {
   char word[100];
   size_t word_index = 0;
 
   for (size_t i = 0; i < limit; i++) {
-    switch(str[i]) {
+    switch (str[i]) {
       case ' ':
-        if (str[i+1] == ' ')
-          continue;
+        if (str[i + 1] == ' ') continue;
         if (in_string) {
-            word[word_index++] = str[i];
-            continue;
+          word[word_index++] = str[i];
+          continue;
         }
         word[word_index] = '\0';
         add_token(word);
@@ -254,7 +234,7 @@ void scan(char *str, size_t limit)
         continue;
       case ')':
         paren_depth--;
-        if (str[i-1] != ' ') {
+        if (str[i - 1] != ' ') {
           word[word_index] = '\0';
           add_token(word);
           word_index = 0;
@@ -283,8 +263,7 @@ void scan(char *str, size_t limit)
   }
 }
 
-void clear_tokens()
-{
+void clear_tokens() {
   token_t *cur = tokens, *next;
 
   while (cur != NULL) {

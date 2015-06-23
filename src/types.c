@@ -31,10 +31,8 @@
 #include "types.h"
 #include "token.h"
 
-char *strtype(type_t type)
-{
-  switch(type)
-  {
+char *strtype(type_t type) {
+  switch (type) {
     case INTEGER:
       return "integer";
     case FLOAT:
@@ -54,26 +52,21 @@ char *strtype(type_t type)
   }
 }
 
-int length(cons_t *list)
-{
-  if (list == NULL)
-    return 0;
+int length(cons_t *list) {
+  if (list == NULL) return 0;
 
   int len = 0;
   cons_t *head = list;
 
-  while (head != NULL)
-  {
+  while (head != NULL) {
     len++;
     head = head->cdr;
   }
   return len;
 }
 
-char *strop(operator_t op)
-{
-  switch(op)
-  {
+char *strop(operator_t op) {
+  switch (op) {
     case ADD:
       return "+";
     case SUBTRACT:
@@ -85,10 +78,8 @@ char *strop(operator_t op)
   }
 }
 
-void print_obj(object_t *obj, FILE *stream)
-{
-  switch(obj->type)
-  {
+void print_obj(object_t *obj, FILE *stream) {
+  switch (obj->type) {
     case INTEGER:
       fprintf(stream, "%ld", obj->integer);
       break;
@@ -107,36 +98,32 @@ void print_obj(object_t *obj, FILE *stream)
     case BOOLEAN:
       fprintf(stream, obj->boolean ? "#t" : "#f");
       break;
-    case LIST:
-      {
-        if (obj == EMPTY_LIST) {
-          fprintf(stream, "()");
-          return;
-        }
-
-        fprintf(stream, "(");
-        cons_t *cur = obj->cell;
-
-        while (cur->cdr != NULL) {
-          print_obj(cur->car, stream);
-          fputs(" ", stream);
-          cur = cur->cdr;
-        }
-        print_obj(cur->car, stream);
-        fprintf(stream, ")");
+    case LIST: {
+      if (obj == EMPTY_LIST) {
+        fprintf(stream, "()");
+        return;
       }
-      break;
+
+      fprintf(stream, "(");
+      cons_t *cur = obj->cell;
+
+      while (cur->cdr != NULL) {
+        print_obj(cur->car, stream);
+        fputs(" ", stream);
+        cur = cur->cdr;
+      }
+      print_obj(cur->car, stream);
+      fprintf(stream, ")");
+    } break;
     case BUILTIN:
       fprintf(stream, "%s", builtin_syms[obj->builtin]);
       break;
     case PREDICATE:
       fprintf(stream, "%s", builtin_syms[PREDICATE(obj->predicate)]);
       break;
-    case OPERATOR:
-      {
-        char op;
-      switch(obj->operator)
-      {
+    case OPERATOR: {
+      char op;
+      switch (obj->operator) {
         case ADD:
           op = '+';
           break;
@@ -152,14 +139,12 @@ void print_obj(object_t *obj, FILE *stream)
       }
       fprintf(stream, "%c", op);
       break;
-      }
+    }
   }
 }
 
-char *strpred(predicate_t pred)
-{
-  switch(pred)
-  {
+char *strpred(predicate_t pred) {
+  switch (pred) {
     case INTEGER_P:
       return "integer?";
     case FLOAT_P:

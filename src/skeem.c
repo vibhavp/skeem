@@ -31,10 +31,13 @@
 #include <setjmp.h>
 
 #define SKEEM_VERSION "1.0a"
-#define get_input(i) {size_t __n__; getline(&(i), &__n__, stream);}
+#define get_input(i)               \
+  {                                \
+    size_t __n__;                  \
+    getline(&(i), &__n__, stream); \
+  }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 #ifdef DEBUG
   setbuf(stdout, NULL);
 #endif
@@ -46,8 +49,7 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-  if (stream == stdin)
-    printf("skeem version %s\n", SKEEM_VERSION);
+  if (stream == stdin) printf("skeem version %s\n", SKEEM_VERSION);
   mem_init();
   builtins_init();
 
@@ -55,26 +57,22 @@ int main(int argc, char **argv)
   nquotes = 0;
 
   while (true) {
-    if (stream == stdin)
-      printf("skeem> ");
+    if (stream == stdin) printf("skeem> ");
 
     if (setjmp(err)) {
-      if (stream != stdin)
-        exit(EXIT_FAILURE);
+      if (stream != stdin) exit(EXIT_FAILURE);
 
       clear_tokens();
       continue;
     }
-input:
+  input:
     get_input(input);
 
-    if (input[0] == '\n')    
-      continue;
+    if (input[0] == '\n') continue;
 
     scan(input, strlen(input));
 
-    if (feof(stdin))
-      break;
+    if (feof(stdin)) break;
     if (paren_depth < 0) {
       fprintf(stderr, "Unbalanced expression\n");
       paren_depth = 0;
@@ -82,18 +80,17 @@ input:
     }
     if (nquotes % 2 != 0 || paren_depth != 0) {
       if (stream == stdin) {
-          printf("... ");
-          fflush(stdout);
+        printf("... ");
+        fflush(stdout);
       }
       goto input;
     }
 
     register object_t *obj = tokens_to_obj();
-    if (obj == NULL)
-      continue;
+    if (obj == NULL) continue;
     no_gc = false;
     obj = eval(obj);
-    
+
     if (stream == stdin) {
       printf("\n=> ");
       fflush(stdout);
@@ -102,8 +99,7 @@ input:
     }
 
     clear_tokens();
-    if (feof (stream))
-      break;
+    if (feof(stream)) break;
   }
 
   return 0;
