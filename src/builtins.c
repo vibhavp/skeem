@@ -28,6 +28,8 @@
 #include "mem.h"
 #include "builtins.h"
 
+#define error(...) {fprintf(stderr, __VA_ARGS__); goto_top();}
+
 object_t *add(object_t *n1, object_t *n2)
 {
   object_t *result;
@@ -51,7 +53,7 @@ object_t *add(object_t *n1, object_t *n2)
     if (_INTEGER_P(n2))
       result->flt = n1->flt + n2->integer;
     else if (_FLOAT_P(n2))
-      result->flt = n1->flt + n2->flt;  
+      result->flt = n1->flt + n2->flt;
     else
       goto err;
   }
@@ -62,8 +64,7 @@ object_t *add(object_t *n1, object_t *n2)
   return result;
 
 err:
-  fprintf(stderr,"add: Wrong argument type(s)\n");
-  goto_top();
+  error("add: Wrong argument type(s)\n");
 }
 
 object_t *subtract(object_t *n1, object_t *n2)
@@ -100,8 +101,7 @@ object_t *divide(object_t *n1, object_t *n2)
     return result;
   }
 
-  fprintf(stderr, "divide: Wrong argument type(s)\n");
-  goto_top();
+  error("divide: Wrong argument type(s)\n");
 }
 
 object_t *multiply(object_t *n1, object_t *n2)
@@ -127,7 +127,7 @@ object_t *multiply(object_t *n1, object_t *n2)
     if (_INTEGER_P(n2))
       result->flt = n1->flt * n2->integer;
     else if (_FLOAT_P(n2))
-      result->flt = n1->flt * n2->flt;  
+      result->flt = n1->flt * n2->flt;
     else
       goto err;
   }
@@ -138,7 +138,7 @@ object_t *multiply(object_t *n1, object_t *n2)
   return result;
 
 err:
-  fprintf(stderr,"multiply: Wrong argument type(s)\n");
+  error("multiply: Wrong argument type(s)\n");
   goto_top();
 }
 
@@ -199,7 +199,7 @@ object_t *print(object_t *obj)
       printf("%d", obj->boolean);
       break;
     default:
-      fprintf(stderr, "Type %s isn't printable.\n", strtype(obj->type));
+      error("Type %s isn't printable.\n", strtype(obj->type));
       goto_top();
   }
 
@@ -209,7 +209,7 @@ object_t *print(object_t *obj)
 object_t *cons(object_t *obj1, object_t *obj2)
 {
   object_t *cons = obj_init(LIST);
- 
+
   cons->cell = cons_init();
   cons->cell->car = obj1;
   cons->cell->cdr = cons_init();
@@ -232,7 +232,7 @@ object_t *set(object_t *sym, object_t *val)
     struct bind_tree *bind = env_lookup_node(sym);
 
     if (bind == NULL) {
-      fprintf(stderr, "Unbound variable: %s\n", sym->string);
+      error("Unbound variable: %s\n", sym->string);
       goto_top();
     }
     bind->val = val;
@@ -257,8 +257,7 @@ object_t *define(object_t *sym, object_t *val)
     else
       func->cell->cdr->car = obj_init(LIST);
       func->cell->cdr->car->cell = sym->cell->cdr;
-    
-    
+
     func->cell->cdr->cdr = cons_init();
     func->cell->cdr->cdr->car = obj_init(LIST);
     func->cell->cdr->cdr->car->cell = val->cell;
@@ -268,7 +267,7 @@ object_t *define(object_t *sym, object_t *val)
   }
 
   else {
-    fprintf(stderr, "Wrong argument type - %s (needed symbol)\n", strtype(sym->type));
+    error("Wrong argument type - %s (needed symbol)\n", strtype(sym->type));
     goto_top();
   }
 
@@ -303,7 +302,7 @@ static void correct_number_args(char *function, int params_no,
 {
   int len = length(args);
   if (len != params_no) {
-    fprintf(stderr,
+    error(
             "Wrong number of arguments to %s (Got %d, Wanted %d)\n",
             function, len, params_no);
     goto_top();
@@ -311,7 +310,7 @@ static void correct_number_args(char *function, int params_no,
 }
 
 object_t *call_predicate(cons_t *obj, predicate_t pred)
-{ 
+{
   switch(pred)
   {
     case INTEGER_P:
@@ -408,7 +407,7 @@ bool equal(object_t *obj1, object_t *obj2)
 object_t *car(object_t *obj)
 {
   if (obj->type != LIST) {
-    fprintf(stderr, "Wrong argument type - %s. (Expected list)\n",
+    error("Wrong argument type - %s. (Expected list)\n",
             strtype(obj->type));
     goto_top();
   }
@@ -418,7 +417,7 @@ object_t *car(object_t *obj)
 object_t *cdr(object_t *obj)
 {
   if(obj->type != LIST) {
-    fprintf(stderr, "Wrong argument type - %s. (Expected list)\n",
+    error("Wrong argument type - %s. (Expected list)\n",
             strtype(obj->type));
     goto_top();
   }
@@ -430,7 +429,7 @@ object_t *cdr(object_t *obj)
 object_t *obj_len(object_t *obj)
 {
   if (obj->type != LIST) {
-    fprintf(stderr, "Wrong argument type - %s. (Expected list)\n",
+    error("Wrong argument type - %s. (Expected list)\n",
             strtype(obj->type));
     goto_top();
   }
@@ -441,7 +440,7 @@ object_t *obj_len(object_t *obj)
   return len;
 }
 
-#if GCC_VERSION > 40700
+#if GCC_VERSION >= 40700
 _Noreturn
 #endif
 
@@ -450,7 +449,7 @@ void exit_status(object_t *status)
   if (_INTEGER_P(status))
     exit(status->integer);
 
-  fprintf(stderr, "Wrong argument type - %s. (Expected integer)",
+  error("Wrong argument type - %s. (Expected integer)",
           strtype(status->type));
   goto_top();
 }
@@ -563,7 +562,7 @@ object_t *apply(object_t *function, cons_t *args)
     default:
       fprintf(stderr, "Invalid Function: ");
       print_obj(function, stderr);
-      fprintf(stderr, "\n");
+      error("\n");
       goto_top();
   }
 }
@@ -582,7 +581,7 @@ object_t *eval(object_t *obj)
           return EMPTY_LIST;
 
         mark(obj);
-        
+
         if (obj->cell->car->type == BUILTIN && obj->cell->car->builtin == LAMBDA)
           return correct_number_args("lambda", 2, obj->cell->cdr), obj;
 
@@ -597,13 +596,13 @@ object_t *eval(object_t *obj)
         object_t *result = env_lookup(obj);
 
         if (result == NULL) {
-          fprintf(stderr, "Unbound variable: %s\n", obj->string);
+          error("Unbound variable: %s\n", obj->string);
           goto_top();
         }
 
         while (result->type == SYMBOL)
           result = env_lookup(obj);
-        
+
         return result;
       }
     default:
