@@ -48,8 +48,7 @@ static struct obj_list *heap = NULL, *heap_head = NULL;
 /*Pinned objects get marked every GC cycle*/
 static struct obj_list *pinned = NULL, *pin_head = NULL;
 
-void *ERR_MALLOC(size_t bytes)
-{
+void *ERR_MALLOC(size_t bytes) {
   void *ptr = calloc(1, bytes);
 
   if (ptr == NULL) {
@@ -59,23 +58,19 @@ void *ERR_MALLOC(size_t bytes)
   return ptr;
 }
 
-struct obj_list *obj_list_init()
-{
+struct obj_list *obj_list_init() {
   struct obj_list *n = ERR_MALLOC(sizeof(struct obj_list));
   return n;
 }
 
-void pin(object_t *obj)
-{
-
+void pin(object_t *obj) {
 #ifdef DEBUG
   printf("Pinned object\n");
 #endif
   if (pinned == NULL) {
     pinned = obj_list_init();
     pin_head = pinned;
-  }
-  else {
+  } else {
     pin_head->next = obj_list_init();
     pin_head->next->prev = pin_head;
     pin_head = pin_head->next;
@@ -84,8 +79,7 @@ void pin(object_t *obj)
   pin_head->val = obj;
 }
 
-void unpin_head()
-{
+void unpin_head() {
 #ifdef DEBUG
   printf("Unpinned head.\n");
 #endif
@@ -103,8 +97,7 @@ void unpin_head()
   }
 }
 
-cons_t *cons_init()
-{
+cons_t *cons_init() {
   cons_t *cell = ERR_MALLOC(sizeof(cons_t));
   cell->car = NULL;
   cell->cdr = NULL;
@@ -112,20 +105,17 @@ cons_t *cons_init()
   return cell;
 }
 
-void cons_free(cons_t *cell)
-{
+void cons_free(cons_t *cell) {
   cons_t *curr = cell;
 
-  while (curr != NULL)
- {
+  while (curr != NULL) {
     obj_free(curr->car);
     curr = curr->cdr;
   }
 }
 
 /*Initialize the heap, root environment, and pinned list*/
-void mem_init()
-{
+void mem_init() {
   heap = ERR_MALLOC(sizeof(struct obj_list));
   heap_head = heap;
 
@@ -135,16 +125,14 @@ void mem_init()
   env_head = env_global;
 }
 
-object_t *obj_init(type_t type)
-{
-  if (num_obj == max_obj && !no_gc)
-    gc();
+object_t *obj_init(type_t type) {
+  if (num_obj == max_obj && !no_gc) gc();
 
   object_t *obj = ERR_MALLOC(sizeof(object_t));
   obj->type = type;
   obj->marked = false;
 
-  if (type == SYMBOL){
+  if (type == SYMBOL) {
     num_obj += 1;
     return obj;
   }
@@ -166,10 +154,8 @@ object_t *obj_init(type_t type)
   return obj;
 }
 
-void bind_tree_free(struct bind_tree *tree)
-{
-  if (tree != NULL)
-  {
+void bind_tree_free(struct bind_tree *tree) {
+  if (tree != NULL) {
     bind_tree_free(tree->left);
     struct bind_tree *right = tree->right;
     free(tree->symbol);
@@ -178,9 +164,8 @@ void bind_tree_free(struct bind_tree *tree)
   }
 }
 
-void obj_free(object_t *obj)
-{
-  switch(obj->type) {
+void obj_free(object_t *obj) {
+  switch (obj->type) {
     case ENVIRONMENT:
       bind_tree_free(obj->env->tree);
       break;
@@ -200,10 +185,8 @@ void obj_free(object_t *obj)
   free(obj);
 }
 
-void mark(object_t *obj)
-{
-  if (obj->marked)
-    return;
+void mark(object_t *obj) {
+  if (obj->marked) return;
 
   obj->marked = true;
 
@@ -217,8 +200,7 @@ void mark(object_t *obj)
   }
 }
 
-void mark_bind_tree(struct bind_tree *tree)
-{
+void mark_bind_tree(struct bind_tree *tree) {
   if (tree != NULL) {
     mark_bind_tree(tree->left);
     mark(tree->symbol);
@@ -227,11 +209,9 @@ void mark_bind_tree(struct bind_tree *tree)
   }
 }
 
-void mark_all()
-{
-
+void mark_all() {
   object_t *cur = env_global;
-  
+
   while (cur != NULL) {
     if (cur->env->tree->symbol != NULL) /*tree isnt empty*/
       mark_bind_tree(cur->env->tree);
@@ -241,8 +221,7 @@ void mark_all()
 
   /*mark all pinned objects*/
   struct obj_list *cur_pin = pinned;
-  if (pinned == NULL)
-    return;
+  if (pinned == NULL) return;
 
   if (cur_pin->val == NULL) {
     while (cur_pin != NULL) {
@@ -252,12 +231,10 @@ void mark_all()
   }
 }
 
-void sweep()
-{
+void sweep() {
   struct obj_list *curr = heap, *prev = NULL;
 
   while (curr->val != NULL) {
-
     if (!curr->val->marked) {
       obj_free(curr->val);
 
@@ -265,16 +242,14 @@ void sweep()
         prev->next = curr->next;
         free(curr);
         curr = prev->next;
-      }
-      else {
+      } else {
         /*the first object on the heap is being freed*/
         heap = heap->next;
         free(curr);
         curr = heap;
       }
       num_obj--;
-    }
-    else {
+    } else {
       curr->val->marked = false;
       prev = curr;
       curr = curr->next;
@@ -282,8 +257,7 @@ void sweep()
   }
 }
 
-void gc()
-{
+void gc() {
 #ifdef DEBUG
   printf("Started GC cycle\n");
 #endif
@@ -293,8 +267,7 @@ void gc()
   max_obj = num_obj * 2;
 }
 
-void tree_insert(struct bind_tree *tree, object_t *symbol, object_t *val)
-{
+void tree_insert(struct bind_tree *tree, object_t *symbol, object_t *val) {
   struct bind_tree *y = NULL, *x = tree;
 
   if (tree->symbol != NULL) { /*tree isnt empty*/
@@ -313,8 +286,8 @@ void tree_insert(struct bind_tree *tree, object_t *symbol, object_t *val)
     }
   }
 
-  struct bind_tree *new = tree->symbol == NULL ?
-      tree : ERR_MALLOC(sizeof(struct bind_tree));
+  struct bind_tree *new =
+      tree->symbol == NULL ? tree : ERR_MALLOC(sizeof(struct bind_tree));
   new->symbol = symbol;
   new->val = val;
   new->parent = y;
@@ -322,31 +295,27 @@ void tree_insert(struct bind_tree *tree, object_t *symbol, object_t *val)
   if (y == NULL) {
     tree->root = new;
     return;
-  }
-  else if (strcmp(symbol->string, y->symbol->string) < 0)
+  } else if (strcmp(symbol->string, y->symbol->string) < 0)
     y->left = new;
   else
     y->right = new;
 }
 
-inline void env_insert(object_t *symbol, object_t *val)
-{
+inline void env_insert(object_t *symbol, object_t *val) {
   tree_insert(env_head->env->prev->env->tree, symbol, val);
 }
 
-inline void arg_insert(object_t *symbol, object_t *val)
-{
+inline void arg_insert(object_t *symbol, object_t *val) {
   tree_insert(env_head->env->tree, symbol, val);
 }
 
-struct bind_tree *tree_lookup(struct bind_tree *tree, object_t *symbol)
-{
+struct bind_tree *tree_lookup(struct bind_tree *tree, object_t *symbol) {
   if (tree->symbol == NULL) /*tree is empty*/
     return NULL;
   int diff;
 
-  while (tree != NULL && (diff = strcmp(symbol->string, tree->symbol->string))
-                         != 0) {       
+  while (tree != NULL &&
+         (diff = strcmp(symbol->string, tree->symbol->string)) != 0) {
     if (diff < 0)
       tree = tree->left;
     else if (diff > 0)
@@ -356,8 +325,7 @@ struct bind_tree *tree_lookup(struct bind_tree *tree, object_t *symbol)
   return tree == NULL ? NULL : tree;
 }
 
-object_t *env_lookup(object_t *symbol)
-{
+object_t *env_lookup(object_t *symbol) {
   struct bind_tree *bind = NULL;
   object_t *cur = env_head;
 
@@ -365,14 +333,13 @@ object_t *env_lookup(object_t *symbol)
     bind = tree_lookup(cur->env->tree, symbol);
     cur = cur->env->prev;
   }
-  
+
   bind = bind == NULL ? tree_lookup(env_head->env->tree, symbol) : bind;
-  
-  return bind == NULL ? NULL : bind->val;  
+
+  return bind == NULL ? NULL : bind->val;
 }
 
-struct bind_tree *env_lookup_node(object_t *symbol)
-{
+struct bind_tree *env_lookup_node(object_t *symbol) {
   struct bind_tree *bind = NULL;
   object_t *cur = env_head->env->prev;
 
@@ -384,13 +351,12 @@ struct bind_tree *env_lookup_node(object_t *symbol)
   return bind == NULL ? tree_lookup(env_head->env->tree, symbol) : bind;
 }
 
-void print_obj_list(struct obj_list *list)
-{
+void print_obj_list(struct obj_list *list) {
   struct obj_list *curr = list;
 
   while (curr != NULL) {
     object_t *obj = curr->val;
-    switch(obj->type) {
+    switch (obj->type) {
       case STRING:
         printf("<string>\t\"%s\" \n", obj->string);
         break;
@@ -419,28 +385,24 @@ void print_obj_list(struct obj_list *list)
   }
 }
 
-void print_heap()
-{
+void print_heap() {
   printf("Current heap: \n");
   print_obj_list(heap);
 }
 
-void print_pinned()
-{
+void print_pinned() {
   printf("Pinned objects: \n");
   print_obj_list(pinned);
 }
 
-void env_push()
-{
+void env_push() {
   env_head->env->next = obj_init(ENVIRONMENT);
   env_head->env->next->env->prev = env_head;
   env_head = env_head->env->next;
   env_head->marked = true;
 }
 
-inline void env_pop()
-{
+inline void env_pop() {
   env_head = env_head->env->prev;
   env_head->env->next = NULL;
 }
@@ -448,12 +410,10 @@ inline void env_pop()
 #if GCC_VERSION >= 40700
 _Noreturn
 #endif
-void goto_top()
-{
-  while (env_head->env->next != NULL)
-    env_pop();
-  while (pinned != NULL)
-    unpin_head();
+    void
+    goto_top() {
+  while (env_head->env->next != NULL) env_pop();
+  while (pinned != NULL) unpin_head();
 
   longjmp(err, 1);
 }
