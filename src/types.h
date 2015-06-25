@@ -69,7 +69,11 @@ typedef enum {
   ADD,
   SUBTRACT,
   DIVIDE,
-  MULTIPLY
+  MULTIPLY,
+  GREATER,
+  GREATER_EQ,
+  LESSER,
+  LESSER_EQ
 } operator_t;
 
 typedef enum {

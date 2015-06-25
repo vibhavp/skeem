@@ -44,8 +44,7 @@ object_t *add(object_t *n1, object_t *n2) {
     } else if (_FLOAT_P(n2)) {
       result = obj_init(FLOAT);
       result->flt = n1->integer + n2->flt;
-    } else
-      goto err;
+    } else error("add: Wrong argument type - %s (Expected number)", strtype(n2->type));
   }
 
   else if (_FLOAT_P(n1)) {
@@ -55,17 +54,12 @@ object_t *add(object_t *n1, object_t *n2) {
       result->flt = n1->flt + n2->integer;
     else if (_FLOAT_P(n2))
       result->flt = n1->flt + n2->flt;
-    else
-      goto err;
+    else error("add: Wrong argument type - %s (Expected number)", strtype(n2->type));
   }
 
-  else
-    goto err;
+  else error("add: Wrong argument type - %s (Expected number)", strtype(n1->type));
 
   return result;
-
-err:
-  error("add: Wrong argument type(s)\n");
 }
 
 object_t *subtract(object_t *n1, object_t *n2) {
@@ -89,8 +83,8 @@ object_t *subtract(object_t *n1, object_t *n2) {
 object_t *divide(object_t *n1, object_t *n2) {
   if (_NUMBER_P(n1) && _NUMBER_P(n2)) {
     if (NUMBER(n1) == 0 || NUMBER(n2) == 0) {
-      fprintf(stderr, "divide: Division by zero.\n");
-      goto_top();
+      error("divide: Division by zero.\n");
+
     }
 
     object_t *result = obj_init(FLOAT);
@@ -112,8 +106,7 @@ object_t *multiply(object_t *n1, object_t *n2) {
     } else if (_FLOAT_P(n2)) {
       result = obj_init(FLOAT);
       result->flt = n1->integer * n2->flt;
-    } else
-      goto err;
+    } else error("Wrong argument type - %s (Wanted number)", strtype(n2->type))
   }
 
   else if (_FLOAT_P(n1)) {
@@ -123,24 +116,58 @@ object_t *multiply(object_t *n1, object_t *n2) {
       result->flt = n1->flt * n2->integer;
     else if (_FLOAT_P(n2))
       result->flt = n1->flt * n2->flt;
-    else
-      goto err;
+    else error("Wrong argument type - %s (Wanted number)", strtype(n2->type));
   }
 
-  else
-    goto err;
+  else error("Wrong argument type - %s (Wanted number)", strtype(n2->type));
 
   return result;
+}
 
-err:
-  error("multiply: Wrong argument type(s)\n");
-  goto_top();
+#define BOOL_TO_OBJ(predicate) ((predicate) ? CONST_TRUE : CONST_FALSE)
+
+bool greater(object_t *n1, object_t *n2)
+{
+  if (_INTEGER_P(n1)) {
+    if (_FLOAT_P(n2)) return n1->integer > n2->flt;
+    if (_INTEGER_P(n2)) return n1->integer > n2->integer;
+    else goto n1err;
+  }
+  if (_FLOAT_P(n1)) {
+    if (_FLOAT_P(n2)) return n1->flt > n2->flt;
+    if (_INTEGER_P(n2)) return n1->flt > n2->integer;
+    else goto n2err;
+  }
+  /*n1 is neither int or float*/
+n1err:
+  error("greater: Wrong argument type - %s (Wanted number)", strtype(n1->type));
+n2err:
+  error("greater: Wrong argument type - %s (Wanted number)", strtype(n2->type));
+}
+
+bool lesser(object_t *n1, object_t *n2)
+{
+  if (_INTEGER_P(n1)) {
+    if (_FLOAT_P(n2)) return n1->integer < n2->flt;
+    if (_INTEGER_P(n2)) return n1->integer < n2->integer;
+    else goto n1err;
+  }
+  if (_FLOAT_P(n1)) {
+    if (_FLOAT_P(n2)) return n1->flt < n2->flt;
+    if (_INTEGER_P(n2)) return n1->flt < n2->integer;
+    else goto n2err;
+  }
+  /*n1 is neither int or float*/
+n1err:
+  error("lesser: Wrong argument type - %s (Wanted number)", strtype(n1->type));
+n2err:
+  error("lesser: Wrong argument type - %s (Wanted number)", strtype(n2->type));
 }
 
 #define IS_FALSE(val) (_BOOLEAN_P((val)) && !(val)->boolean)
 #define IS_TRUE(val) (!IS_FALSE((val)))
 
-object_t * and (object_t * test1, object_t *test2) {
+object_t *and (object_t * test1, object_t *test2) {
   object_t *val1 = eval(test1);
   if (IS_FALSE(val1)) return val1;
 
@@ -187,7 +214,7 @@ object_t *print(object_t *obj) {
       break;
     default:
       error("Type %s isn't printable.\n", strtype(obj->type));
-      goto_top();
+
   }
 
   return CONST_TRUE;
@@ -216,7 +243,7 @@ object_t *set(object_t *sym, object_t *val) {
 
     if (bind == NULL) {
       error("Unbound variable: %s\n", sym->string);
-      goto_top();
+
     }
     bind->val = val;
   }
@@ -250,7 +277,6 @@ object_t *define(object_t *sym, object_t *val) {
 
   else {
     error("Wrong argument type - %s (needed symbol)\n", strtype(sym->type));
-    goto_top();
   }
 
   return val;
@@ -266,12 +292,26 @@ static object_t *call_operator(operator_t op, cons_t *args) {
       return subtract(eval(args->car), eval(args->cdr->car));
     case DIVIDE:
       return divide(eval(args->car), eval(args->cdr->car));
-    default: /*MULTIPLY*/
+    case GREATER:
+      return BOOL_TO_OBJ(greater(eval(args->car), eval(args->cdr->car)));
+    case GREATER_EQ:
+      {
+        object_t *n1 = eval(args->car);
+        object_t *n2 = eval(args->cdr->car);
+        return or(BOOL_TO_OBJ(greater(n1, n2)), BOOL_TO_OBJ(equal(n1, n2)));
+      }
+    case LESSER:
+      return BOOL_TO_OBJ(lesser(eval(args->car), eval(args->cdr->car)));
+    case LESSER_EQ:
+      {
+        object_t *n1 = eval(args->car);
+        object_t *n2 = eval(args->cdr->car);
+        return or(BOOL_TO_OBJ(lesser(n1, n2)), BOOL_TO_OBJ(equal(n1, n2)));
+      }
+    case MULTIPLY:
       return multiply(eval(args->car), eval(args->cdr->car));
   }
 }
-
-#define BOOL_TO_OBJ(predicate) ((predicate) ? CONST_TRUE : CONST_FALSE)
 
 /*true if the length of args == params_no. Else, print an error message and
  * return false*/
@@ -280,7 +320,7 @@ static void correct_number_args(char *function, int params_no, cons_t *args) {
   if (len != params_no) {
     error("Wrong number of arguments to %s (Got %d, Wanted %d)\n", function,
           len, params_no);
-    goto_top();
+
   }
 }
 
@@ -377,7 +417,7 @@ bool equal(object_t *obj1, object_t *obj2) {
 object_t *car(object_t *obj) {
   if (obj->type != LIST) {
     error("Wrong argument type - %s. (Expected list)\n", strtype(obj->type));
-    goto_top();
+
   }
   return obj->cell->car;
 }
@@ -385,7 +425,7 @@ object_t *car(object_t *obj) {
 object_t *cdr(object_t *obj) {
   if (obj->type != LIST) {
     error("Wrong argument type - %s. (Expected list)\n", strtype(obj->type));
-    goto_top();
+
   }
   object_t *o = obj_init(LIST);
   o->cell = obj->cell->cdr;
@@ -395,7 +435,7 @@ object_t *cdr(object_t *obj) {
 object_t *obj_len(object_t *obj) {
   if (obj->type != LIST) {
     error("Wrong argument type - %s. (Expected list)\n", strtype(obj->type));
-    goto_top();
+
   }
 
   object_t *len = obj_init(INTEGER);
@@ -413,7 +453,7 @@ _Noreturn
   if (_INTEGER_P(status)) exit(status->integer);
 
   error("Wrong argument type - %s. (Expected integer)", strtype(status->type));
-  goto_top();
+
 }
 
 static object_t *call_builtin(builtin_t builtin, cons_t *args) {
@@ -522,7 +562,6 @@ object_t *apply(object_t *function, cons_t *args) {
       fprintf(stderr, "Invalid Function: ");
       print_obj(function, stderr);
       error("\n");
-      goto_top();
   }
 }
 
@@ -550,7 +589,6 @@ object_t *eval(object_t *obj) {
 
       if (result == NULL) {
         error("Unbound variable: %s\n", obj->string);
-        goto_top();
       }
 
       while (result->type == SYMBOL) result = env_lookup(obj);
@@ -587,7 +625,7 @@ void builtins_init() {
     builtins[index]->predicate = i;
   }
 
-  for (operator_t i = ADD; i <= MULTIPLY; i++) {
+  for (operator_t i = ADD; i <= LESSER_EQ; i++) {
     int index = WHILE + EQUAL_P + i + 2;
 
     builtins[index] = ERR_MALLOC(sizeof(object_t));

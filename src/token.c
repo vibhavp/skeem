@@ -39,8 +39,12 @@ enum tok_type {
   TOK_OPERATOR_MINUS,
   TOK_OPERATOR_DIVIDE,
   TOK_OPERATOR_MULTIPLY,
+  TOK_OPERATOR_GREATER,
+  TOK_OPERATOR_GEQ,
+  TOK_OPERATOR_LESSER,
+  TOK_OPERATOR_LEQ,
   TOK_PAREN_OPEN,
-  TOK_PAREN_CLOSE,
+  TOK_PAREN_CLOSE
 };
 
 typedef struct _token {
@@ -82,6 +86,14 @@ enum tok_type type(char *word, size_t start) {
     case '/':
       if (word[start + 1] != '\0') return TOK_SYMBOL;
       return TOK_OPERATOR_DIVIDE;
+    case '<':
+      if (word[start + 1] == '=') return TOK_OPERATOR_LEQ;
+      if (word[start + 1] != '\0') return TOK_SYMBOL;
+      return TOK_OPERATOR_LESSER;
+    case '>':
+      if (word[start + 1] == '=') return TOK_OPERATOR_GEQ;
+      if (word[start + 1] != '\0') return TOK_SYMBOL;
+      return TOK_OPERATOR_GREATER;
     case '0' ... '9':
       for (size_t i = start; i < strlen(word); i++) {
         if (!(word[i] >= '0' && word[i] <= '9')) {
@@ -204,6 +216,14 @@ object_t *token_to_obj(token_t *tok) {
       return builtins[OPERATOR(MULTIPLY)];
     case TOK_OPERATOR_DIVIDE:
       return builtins[OPERATOR(DIVIDE)];
+    case TOK_OPERATOR_GREATER:
+      return builtins[OPERATOR(GREATER)];
+    case TOK_OPERATOR_GEQ:
+      return builtins[OPERATOR(GREATER_EQ)];
+    case TOK_OPERATOR_LESSER:
+      return builtins[OPERATOR(LESSER)];
+    case TOK_OPERATOR_LEQ:
+      return builtins[OPERATOR(LESSER_EQ)];
   }
 }
 

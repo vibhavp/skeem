@@ -60,7 +60,7 @@ extern bool equal(object_t *obj1, object_t *obj2);
 extern bool eqv(object_t *obj1, object_t *obj2);
 extern object_t *call_predicate(cons_t *obj, predicate_t pred);
 
-object_t *builtins[BUILTIN_LEN + 4];
+object_t *builtins[BUILTIN_LEN + 8];
 object_t *CONST_TRUE;
 object_t *CONST_FALSE;
 object_t *EMPTY_LIST;
