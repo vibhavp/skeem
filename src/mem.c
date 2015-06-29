@@ -21,6 +21,7 @@
  */
 
 #include "mem.h"
+#include "types.h"
 #include "builtins.h"
 #include <stdio.h>
 #include <string.h>
@@ -28,12 +29,6 @@
 #include <stdlib.h>
 
 /*Variables for GC purposes*/
-struct obj_list {
-  object_t *val;
-  struct obj_list *next;
-  struct obj_list *prev;
-};
-
 struct env {
   struct bind_tree *tree;
   object_t *next;
@@ -142,13 +137,12 @@ object_t *obj_init(type_t type) {
   heap_head->next->prev = heap_head;
   heap_head = heap_head->next;
 
-#ifdef DEBUG
-  printf("Allocated object type %s\n", strtype(type));
-#endif
-
   if (type == ENVIRONMENT) {
     obj->env = ERR_MALLOC(sizeof(struct env));
     obj->env->tree = ERR_MALLOC(sizeof(struct bind_tree));
+  }
+  else if (type == PROCEDURE) {
+    obj->procedure = ERR_MALLOC(sizeof(procedure_t));
   }
   num_obj += 1;
   return obj;
@@ -179,9 +173,6 @@ void obj_free(object_t *obj) {
     default:
       break;
   }
-#ifdef DEBUG
-  printf("Freed object type %s\n", strtype(obj->type));
-#endif
   free(obj);
 }
 
