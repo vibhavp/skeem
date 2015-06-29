@@ -38,29 +38,9 @@
    (n)->cell->car->builtin == LAMBDA)
 #define _BOOLEAN_P(n) ((n)->type == BOOLEAN)
 
-extern object_t *add(object_t *n1, object_t *n2);
-extern object_t *subtract(object_t *n1, object_t *n2);
-extern object_t *cond(cons_t *clauses);
-extern object_t *quote(object_t *object);
-extern object_t *cond(struct cons *clauses);
-extern object_t * and (object_t * cond1, object_t *cond2);
-extern object_t * or (object_t * cond1, object_t *cond2);
-extern object_t * not(object_t * cond);
-extern object_t *quote(object_t *obj);
-extern object_t *print(object_t *obj);
-extern object_t *apply(object_t *function, cons_t *args);
 extern object_t *eval(object_t *obj);
-extern object_t *define(object_t *sym, object_t *val);
-extern object_t *dup_obj(object_t *obj);
-extern object_t *divide(object_t *n1, object_t *n2);
-extern object_t *multiply(object_t *n1, object_t *n2);
-extern object_t *cons(object_t *car, object_t *cdr);
 extern void builtins_init();
-extern bool equal(object_t *obj1, object_t *obj2);
-extern bool eqv(object_t *obj1, object_t *obj2);
-extern object_t *call_predicate(cons_t *obj, predicate_t pred);
 
-object_t *builtins[BUILTIN_LEN + 8];
 object_t *CONST_TRUE;
 object_t *CONST_FALSE;
 object_t *EMPTY_LIST;

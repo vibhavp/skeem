@@ -34,159 +34,260 @@
     goto_top();                   \
   }
 
-object_t *add(object_t *n1, object_t *n2) {
-  object_t *result;
+static object_t *ZERO, *ONE;
+
+char *types[8] = {"integer", "float", "string", "symbol", "list",
+                  "boolean", "procedure", "procedure"};
+
+inline object_t *eval(object_t *);
+inline object_t *eval_nopush(object_t *);
+
+void add(object_t *n1, object_t *n2, object_t *result) {
 
   if (_INTEGER_P(n1)) {
     if (_INTEGER_P(n2)) {
-      result = obj_init(INTEGER);
+      result->type = INTEGER;
       result->integer = n1->integer + n2->integer;
     } else if (_FLOAT_P(n2)) {
-      result = obj_init(FLOAT);
+      result->type = FLOAT;
       result->flt = n1->integer + n2->flt;
-    } else error("add: Wrong argument type - %s (Expected number)", strtype(n2->type));
+    }
+    else error("add: Wrong argument type - %s (Expected number)\n", types[n2->type]);
   }
 
   else if (_FLOAT_P(n1)) {
-    result = obj_init(FLOAT);
-
-    if (_INTEGER_P(n2))
+    if (_INTEGER_P(n2)) {
+      result->type = FLOAT;
       result->flt = n1->flt + n2->integer;
-    else if (_FLOAT_P(n2))
+    }
+    else if (_FLOAT_P(n2)) {
+      result->type = FLOAT;
       result->flt = n1->flt + n2->flt;
-    else error("add: Wrong argument type - %s (Expected number)", strtype(n2->type));
+    }
+    else error("add: Wrong argument type - %s (Expected number)\n", types[n2->type]);
   }
 
-  else error("add: Wrong argument type - %s (Expected number)", strtype(n1->type));
-
-  return result;
+  else error("add: Wrong argument type - %s (Expected number)\n", types[n1->type]);
 }
 
-object_t *subtract(object_t *n1, object_t *n2) {
-  if (_FLOAT_P(n2))
-    n2->flt = -n2->flt;
-  else if (_INTEGER_P(n2))
-    n2->integer = -n2->integer;
+object_t *add_list(cons_t *args)
+{
+  if (args == NULL) /*no arguments*/
+    return ZERO;
 
-  object_t *result = add(n1, n2);
+  object_t *result = obj_init(INTEGER);
+  result->type = INTEGER;
+  result->integer = 0;
 
-  if (_FLOAT_P(n2))
-    n2->flt = -n2->flt;
-  else if (_INTEGER_P(n2))
-    n2->integer = -n2->integer;
+  while (args != NULL) {
+    add(result, eval(args->car), result);
+    args = args->cdr;
+  }
 
   return result;
 }
 
 #define NUMBER(n) (((n)->type == INTEGER) ? n->integer : n->flt)
 
-object_t *divide(object_t *n1, object_t *n2) {
+void subtract(object_t *n1, object_t *n2, object_t *result) {
+  if (_FLOAT_P(n2))
+    n2->flt = -n2->flt;
+  else if (_INTEGER_P(n2))
+    n2->integer = -n2->integer;
+
+  add(n1, n2, result);
+
+  if (_FLOAT_P(n2))
+    n2->flt = -n2->flt;
+  else if (_INTEGER_P(n2))
+    n2->integer = -n2->integer;
+}
+
+object_t *subtract_list(cons_t *args)
+{
+  if (args == NULL)
+    return ZERO;
+
+  object_t *result = obj_init(args->car->type);
+
+  if (_INTEGER_P(args->car))
+    result->integer = args->car->integer;
+  else if (_FLOAT_P(args->car))
+    result->flt = args->car->flt;
+
+  while (args != NULL) {
+    subtract(result, args->car, result);
+    args = args->cdr;
+  }
+  return result;
+}
+
+void divide(object_t *n1, object_t *n2, object_t *result) {
   if (_NUMBER_P(n1) && _NUMBER_P(n2)) {
     if (NUMBER(n1) == 0 || NUMBER(n2) == 0) {
       error("divide: Division by zero.\n");
-
     }
-
-    object_t *result = obj_init(FLOAT);
     result->flt = NUMBER(n1) / NUMBER(n2);
-
-    return result;
   }
 
   error("divide: Wrong argument type(s)\n");
 }
 
-object_t *multiply(object_t *n1, object_t *n2) {
-  object_t *result;
+object_t *divide_list(cons_t *args) {
+  if (args == NULL)
+    return ONE;
 
+  object_t *result = obj_init(FLOAT);
+  result->flt = 1.0;
+
+  while (args != NULL) {
+    divide(args->car, result, result);
+    args = args->cdr;
+  }
+  return result;
+}
+
+object_t *multiply(object_t *n1, object_t *n2, object_t *result) {
   if (_INTEGER_P(n1)) {
     if (_INTEGER_P(n2)) {
-      result = obj_init(INTEGER);
+      result->type = INTEGER;
       result->integer = n1->integer * n2->integer;
     } else if (_FLOAT_P(n2)) {
-      result = obj_init(FLOAT);
+      result->type = FLOAT;
       result->flt = n1->integer * n2->flt;
-    } else error("Wrong argument type - %s (Wanted number)", strtype(n2->type))
+    } else error("Wrong argument type - %s (Wanted number)\n", types[n2->type])
   }
 
   else if (_FLOAT_P(n1)) {
-    result = obj_init(FLOAT);
+    result->type = FLOAT;
 
     if (_INTEGER_P(n2))
       result->flt = n1->flt * n2->integer;
     else if (_FLOAT_P(n2))
       result->flt = n1->flt * n2->flt;
-    else error("Wrong argument type - %s (Wanted number)", strtype(n2->type));
+    else error("Wrong argument type - %s (Wanted number)\n", types[n2->type]);
   }
 
-  else error("Wrong argument type - %s (Wanted number)", strtype(n2->type));
+  else error("Wrong argument type - %s (Wanted number)\n", types[n2->type]);
 
+  return result;
+}
+
+
+object_t *multiply_list(cons_t *args)
+{
+  if (args == NULL)
+    return ONE;
+
+  object_t *result = obj_init(INTEGER);
+  result->integer = 1;
+
+  while (args != NULL) {
+    multiply(result, args->car, result);
+    args = args->cdr;
+  }
   return result;
 }
 
 #define BOOL_TO_OBJ(predicate) ((predicate) ? CONST_TRUE : CONST_FALSE)
 
-bool greater(object_t *n1, object_t *n2)
-{
-  if (_INTEGER_P(n1)) {
-    if (_FLOAT_P(n2)) return n1->integer > n2->flt;
-    if (_INTEGER_P(n2)) return n1->integer > n2->integer;
-    else goto n1err;
+/*true if the length of args == params_no. Else, print an error message and
+ * return false*/
+void correct_number_args(const char *function, int params_no, cons_t *args) {
+  int len = length(args);
+  if (len != params_no) {
+    error("Wrong number of arguments to %s (Got %d, Wanted %d)\n", function,
+          len, params_no);
   }
-  if (_FLOAT_P(n1)) {
-    if (_FLOAT_P(n2)) return n1->flt > n2->flt;
-    if (_INTEGER_P(n2)) return n1->flt > n2->integer;
-    else goto n2err;
-  }
-  /*n1 is neither int or float*/
-n1err:
-  error("greater: Wrong argument type - %s (Wanted number)", strtype(n1->type));
-n2err:
-  error("greater: Wrong argument type - %s (Wanted number)", strtype(n2->type));
 }
 
-bool lesser(object_t *n1, object_t *n2)
+#define assert_arity(ar) correct_number_args(__func__, (ar), args)
+object_t *greater(cons_t *args)
 {
+  assert_arity(2);
+  object_t *n1 = eval(args->car);
+  object_t *n2 = eval(args->cdr->car);
+
   if (_INTEGER_P(n1)) {
-    if (_FLOAT_P(n2)) return n1->integer < n2->flt;
-    if (_INTEGER_P(n2)) return n1->integer < n2->integer;
+    if (_FLOAT_P(n2)) return BOOL_TO_OBJ(n1->integer > n2->flt);
+    if (_INTEGER_P(n2)) return BOOL_TO_OBJ(n1->integer > n2->integer);
     else goto n1err;
   }
   if (_FLOAT_P(n1)) {
-    if (_FLOAT_P(n2)) return n1->flt < n2->flt;
-    if (_INTEGER_P(n2)) return n1->flt < n2->integer;
+    if (_FLOAT_P(n2)) return BOOL_TO_OBJ(n1->flt > n2->flt);
+    if (_INTEGER_P(n2)) return BOOL_TO_OBJ(n1->flt > n2->integer);
     else goto n2err;
   }
   /*n1 is neither int or float*/
 n1err:
-  error("lesser: Wrong argument type - %s (Wanted number)", strtype(n1->type));
+  error("greater: Wrong argument type - %s (Wanted number)\n", types[n1->type]);
 n2err:
-  error("lesser: Wrong argument type - %s (Wanted number)", strtype(n2->type));
+  error("greater: Wrong argument type - %s (Wanted number)\n", types[n2->type]);
+}
+
+object_t *lesser(cons_t *args)
+{
+  assert_arity(2);
+  object_t *n1 = eval(args->car);
+  object_t *n2 = eval(args->cdr->car);
+
+  if (_INTEGER_P(n1)) {
+    if (_FLOAT_P(n2)) return BOOL_TO_OBJ(n1->integer < n2->flt);
+    if (_INTEGER_P(n2)) return BOOL_TO_OBJ(n1->integer < n2->integer);
+    else goto n1err;
+  }
+  if (_FLOAT_P(n1)) {
+    if (_FLOAT_P(n2)) return BOOL_TO_OBJ(n1->flt < n2->flt);
+    if (_INTEGER_P(n2)) return BOOL_TO_OBJ(n1->flt < n2->integer);
+    else goto n2err;
+  }
+  /*n1 is neither int or float*/
+n1err:
+  error("lesser: Wrong argument type - %s (Wanted number)\n", types[n1->type]);
+n2err:
+  error("lesser: Wrong argument type - %s (Wanted number)\n", types[n2->type]);
 }
 
 #define IS_FALSE(val) (_BOOLEAN_P((val)) && !(val)->boolean)
 #define IS_TRUE(val) (!IS_FALSE((val)))
 
-object_t *and (object_t * test1, object_t *test2) {
-  object_t *val1 = eval(test1);
-  if (IS_FALSE(val1)) return val1;
+object_t *and(cons_t *args)
+{
+  if (args == NULL) return CONST_TRUE;
 
-  return eval(test2);
+  object_t *val;
+  while (args != NULL) {
+    val = eval(args->car);
+    if (IS_FALSE(val)) return val;
+    args = args->cdr;
+  }
+  return val;
 }
 
-object_t * or (object_t * test1, object_t *test2) {
-  object_t *val1 = eval(test1);
-  if (IS_TRUE(val1)) return val1;
+object_t *or(cons_t *args)
+{
+  if (args == NULL) return CONST_FALSE;
 
-  return eval(test2);
+  object_t *val;
+  while (args != NULL) {
+    val = eval(args->car);
+    if (IS_TRUE(val)) return val;
+    args = args->cdr;
+  }
+  return val;
+
 }
 
-inline object_t * not(object_t * obj) {
-  return IS_TRUE(eval(obj)) ? CONST_FALSE : CONST_TRUE;
+object_t *not(cons_t *args) {
+  assert_arity(1);
+  return IS_TRUE(args->car) ? CONST_FALSE : CONST_TRUE;
 }
 
 /*Execute EXP while pred evaluates to true*/
-object_t *loop_while(object_t *pred, object_t *exp) {
+object_t *loop_while(cons_t *args) {
+  assert_arity(2);
+  object_t *pred = eval(args->car);
+  object_t *exp = eval(args->cdr->car);
   object_t *last = CONST_FALSE;
 
   while (IS_TRUE(eval(pred))) {
@@ -196,31 +297,10 @@ object_t *loop_while(object_t *pred, object_t *exp) {
   return last;
 }
 
-object_t *print(object_t *obj) {
-  switch (obj->type) {
-    case INTEGER:
-      printf("%ld", obj->integer);
-      break;
-    case FLOAT:
-      printf("%f", obj->flt);
-    case STRING:
-      printf("%s", obj->string);
-      break;
-    case CHAR:
-      printf("%c", obj->character);
-      break;
-    case BOOLEAN:
-      printf("%d", obj->boolean);
-      break;
-    default:
-      error("Type %s isn't printable.\n", strtype(obj->type));
-
-  }
-
-  return CONST_TRUE;
-}
-
-object_t *cons(object_t *obj1, object_t *obj2) {
+object_t *cons(cons_t *args) {
+  assert_arity(2);
+  object_t *obj1 = eval(args->car);
+  object_t *obj2 = eval(args->cdr->car);
   object_t *cons = obj_init(LIST);
 
   cons->cell = cons_init();
@@ -231,13 +311,17 @@ object_t *cons(object_t *obj1, object_t *obj2) {
   return cons;
 }
 
-object_t *if_else(object_t *pred, object_t *exp1, object_t *exp2) {
-  if (IS_TRUE(eval(pred))) return eval(exp1);
-
-  return eval(exp2);
+object_t *if_else(cons_t *args) {
+  assert_arity(3);
+  if (IS_TRUE(eval(args->car))) return eval(args->cdr->car);
+  return eval(args->cdr->cdr->car);
 }
 
-object_t *set(object_t *sym, object_t *val) {
+object_t *set(cons_t *args) {
+  assert_arity(2);
+  object_t *sym = args->car;
+  object_t *val = eval(args->cdr->car);
+
   if (_SYMBOL_P(sym)) {
     struct bind_tree *bind = env_lookup_node(sym);
 
@@ -251,115 +335,41 @@ object_t *set(object_t *sym, object_t *val) {
   return val;
 }
 
-object_t *define(object_t *sym, object_t *val) {
+static object_t *make_procedure(char *name, cons_t *params, object_t *body)
+{
+  object_t *proc = obj_init(PROCEDURE);
+  proc->procedure->name = name;
+  proc->procedure->params = params;
+  proc->procedure->body = body;
+  return proc;
+}
+
+object_t *define(cons_t *args) {
+  assert_arity(2);
+  object_t *sym = args->car;
+  object_t *val = args->cdr->car;
+
   if (_SYMBOL_P(sym))
     env_insert(sym, eval(val));
 
-  else if (_LIST_P(sym)) { /*defining a function*/
-    object_t *func = obj_init(LIST);
-    func->cell = cons_init();
-    func->cell->car = builtins[LAMBDA];
-
-    func->cell->cdr = cons_init();
-    if (sym->cell->cdr == NULL) /*No parameters*/
-      func->cell->cdr->car = EMPTY_LIST;
-    else
-      func->cell->cdr->car = obj_init(LIST);
-    func->cell->cdr->car->cell = sym->cell->cdr;
-
-    func->cell->cdr->cdr = cons_init();
-    func->cell->cdr->cdr->car = obj_init(LIST);
-    func->cell->cdr->cdr->car->cell = val->cell;
-    env_insert(sym->cell->car, func);
-
-    return func;
-  }
-
-  else {
-    error("Wrong argument type - %s (needed symbol)\n", strtype(sym->type));
-  }
+  else if (_LIST_P(sym))
+    env_insert(sym->cell->car,
+               make_procedure(sym->cell->car->string,
+                              args->car->cell->cdr, args->cdr->car));
+  else
+    error("Wrong argument type - %s (needed symbol)\n", types[sym->type]);
 
   return val;
 }
 
-inline object_t *quote(object_t *obj) { return obj; }
-
-static object_t *call_operator(operator_t op, cons_t *args) {
-  switch (op) {
-    case ADD:
-      return add(eval(args->car), eval(args->cdr->car));
-    case SUBTRACT:
-      return subtract(eval(args->car), eval(args->cdr->car));
-    case DIVIDE:
-      return divide(eval(args->car), eval(args->cdr->car));
-    case GREATER:
-      return BOOL_TO_OBJ(greater(eval(args->car), eval(args->cdr->car)));
-    case GREATER_EQ:
-      {
-        object_t *n1 = eval(args->car);
-        object_t *n2 = eval(args->cdr->car);
-        return or(BOOL_TO_OBJ(greater(n1, n2)), BOOL_TO_OBJ(equal(n1, n2)));
-      }
-    case LESSER:
-      return BOOL_TO_OBJ(lesser(eval(args->car), eval(args->cdr->car)));
-    case LESSER_EQ:
-      {
-        object_t *n1 = eval(args->car);
-        object_t *n2 = eval(args->cdr->car);
-        return or(BOOL_TO_OBJ(lesser(n1, n2)), BOOL_TO_OBJ(equal(n1, n2)));
-      }
-    case MULTIPLY:
-      return multiply(eval(args->car), eval(args->cdr->car));
-  }
+object_t *quote(cons_t *args)
+{
+  assert_arity(1);
+  return args->car;
 }
 
-/*true if the length of args == params_no. Else, print an error message and
- * return false*/
-static void correct_number_args(char *function, int params_no, cons_t *args) {
-  int len = length(args);
-  if (len != params_no) {
-    error("Wrong number of arguments to %s (Got %d, Wanted %d)\n", function,
-          len, params_no);
-
-  }
-}
-
-object_t *call_predicate(cons_t *obj, predicate_t pred) {
-  switch (pred) {
-    case INTEGER_P:
-      correct_number_args(strpred(pred), 1, obj);
-      return BOOL_TO_OBJ(_INTEGER_P(eval(obj->car)));
-    case FLOAT_P:
-      correct_number_args(strpred(pred), 1, obj);
-      return BOOL_TO_OBJ(_FLOAT_P(eval(obj->car)));
-    case NUMBER_P:
-      correct_number_args(strpred(pred), 1, obj);
-      return BOOL_TO_OBJ(_NUMBER_P(eval(obj->car)));
-    case STRING_P:
-      correct_number_args(strpred(pred), 1, obj);
-      return BOOL_TO_OBJ(_STRING_P(eval(obj->car)));
-    case SYMBOL_P:
-      correct_number_args(strpred(pred), 1, obj);
-      return BOOL_TO_OBJ(_SYMBOL_P(obj->car));
-    case LIST_P:
-      correct_number_args(strpred(pred), 1, obj);
-      return BOOL_TO_OBJ(_LIST_P(eval(obj->car)));
-    case LAMBDA_P:
-      correct_number_args(strpred(pred), 1, obj);
-      return BOOL_TO_OBJ(_LAMBDA_P(eval(obj->car)));
-    case BOOLEAN_P:
-      correct_number_args(strpred(pred), 1, obj);
-      return BOOL_TO_OBJ(_BOOLEAN_P(eval(obj->car)));
-    case EQV_P:
-      correct_number_args(strpred(pred), 2, obj);
-      return BOOL_TO_OBJ(eqv(eval(obj->car), eval(obj->cdr->car)));
-    case EQUAL_P:
-      correct_number_args(strpred(pred), 2, obj);
-      return BOOL_TO_OBJ(equal(eval(obj->car), eval(obj->cdr->car)));
-  }
-}
-
-bool eqv(object_t *obj1, object_t *obj2) {
+bool _eqv(object_t *obj1, object_t *obj2)
+{
   if (obj1->type == obj2->type) {
     switch (obj1->type) {
       case BOOLEAN:
@@ -377,20 +387,24 @@ bool eqv(object_t *obj1, object_t *obj2) {
         return obj1->cell == obj2->cell;
       case STRING:
         return obj1->string == obj2->string;
-      case BUILTIN:
-        return obj1->builtin == obj2->builtin;
-      case OPERATOR:
-        return obj1->operator== obj2->operator;
-      default: /*PREDICATE, environment types are hidden from the user*/
-        return obj1->predicate == obj2->predicate;
+      case PRIMITIVE:
+        return obj1->primitive == obj2->primitive;
     }
   }
   return false;
 }
 
+object_t *eqv(cons_t *args)
+{
+  assert_arity(2);
+  return BOOL_TO_OBJ(_eqv(args->car, args->cdr->car));
+}
+
+bool _equal(object_t *obj1, object_t *obj2);
+
 bool eq_cons(cons_t *cell1, cons_t *cell2) {
   if (cell1 && cell2) {
-    if (equal(cell1->car, cell2->car)) /*Using && wouldn't result in TCO*/
+    if (_equal(cell1->car, cell2->car)) /*Using && wouldn't result in TCO*/
       return eq_cons(cell1->cdr, cell2->cdr);
 
     return false;
@@ -400,7 +414,7 @@ bool eq_cons(cons_t *cell1, cons_t *cell2) {
 }
 
 /*Compares lists/strings recursively*/
-bool equal(object_t *obj1, object_t *obj2) {
+bool _equal(object_t *obj1, object_t *obj2) {
   if (obj1->type == obj2->type) {
     switch (obj1->type) {
       case LIST:
@@ -408,109 +422,60 @@ bool equal(object_t *obj1, object_t *obj2) {
       case STRING:
         return strcmp(obj1->string, obj2->string) == 0;
       default:
-        return eqv(obj1, obj2);
+        return _eqv(obj1, obj2);
     }
   }
   return false;
 }
 
-object_t *car(object_t *obj) {
-  if (obj->type != LIST) {
-    error("Wrong argument type - %s. (Expected list)\n", strtype(obj->type));
-
-  }
-  return obj->cell->car;
+object_t *equal(cons_t *args)
+{
+  assert_arity(2);
+  return BOOL_TO_OBJ(_equal(args->car, args->cdr->car));
 }
 
-object_t *cdr(object_t *obj) {
-  if (obj->type != LIST) {
-    error("Wrong argument type - %s. (Expected list)\n", strtype(obj->type));
+object_t *car(cons_t *args)
+{
+  assert_arity(1);
+
+  if (args->car->type != LIST)
+    error("Wrong argument type - %s. (Expected list)\n", types[args->car->type]);
+
+  return args->car->cell->car;
+}
+
+object_t *cdr(cons_t *args)
+{
+  assert_arity(1);
+
+  if (args->car->type != LIST) {
+    error("Wrong argument type - %s. (Expected list)\n", types[args->car->type]);
 
   }
   object_t *o = obj_init(LIST);
-  o->cell = obj->cell->cdr;
+  o->cell = args->car->cell->cdr;
   return o->cell == NULL ? EMPTY_LIST : o;
 }
 
-object_t *obj_len(object_t *obj) {
-  if (obj->type != LIST) {
-    error("Wrong argument type - %s. (Expected list)\n", strtype(obj->type));
+object_t *lambda(cons_t *args)
+{
+  assert_arity(2);
 
-  }
+  if (!_LIST_P(args->car))
+    error("Wrong argument type - %s (Expected list)\n", types[args->car->type]);
 
-  object_t *len = obj_init(INTEGER);
-  len->integer = length(obj->cell);
-
-  return len;
+  return make_procedure("lambda", args->car->cell, args->cdr->car);
 }
 
 #if GCC_VERSION >= 40700
 _Noreturn
 #endif
+object_t *exit_status(cons_t *args)
+{
+  assert_arity(1);
+  if (_INTEGER_P(args->car)) exit(args->car->integer);
 
-    void
-    exit_status(object_t *status) {
-  if (_INTEGER_P(status)) exit(status->integer);
-
-  error("Wrong argument type - %s. (Expected integer)", strtype(status->type));
-
-}
-
-static object_t *call_builtin(builtin_t builtin, cons_t *args) {
-  switch (builtin) {
-    case AND:
-      correct_number_args("and", 2, args);
-      return and(args->car, args->cdr->car);
-    case CAR:
-      correct_number_args("car", 1, args);
-      return car(eval(args->car));
-    case CDR:
-      correct_number_args("cdr", 1, args);
-      return cdr(eval(args->car));
-    case CONS:
-      correct_number_args("cons", 2, args);
-      return cons(args->car, args->cdr->car);
-    case DEFINE:
-      correct_number_args("define", 2, args);
-      return define(args->car, args->cdr->car);
-    case EVAL:
-      correct_number_args("eval", 1, args);
-      return eval(args->car);
-    case EXIT:
-      if (length(args) == 0) exit(EXIT_SUCCESS);
-      correct_number_args("exit", 1, args);
-      exit_status(args->car);
-    case GC:
-      correct_number_args("garbage-collect", 0, args);
-      gc();
-      return CONST_TRUE;
-    case IF:
-      if (length(args) == 2)
-        return if_else(args->car, args->cdr->car, CONST_FALSE);
-      correct_number_args("cond", 3, args);
-      return if_else(args->car, args->cdr->car, args->cdr->cdr->car);
-    case LENGTH:
-      correct_number_args("length", 1, args);
-      return obj_len(eval(args->car));
-    case NOT:
-      correct_number_args("not", 1, args);
-      return not(eval(args->car));
-    case OR:
-      correct_number_args("or", 2, args);
-      return or (args->car, args->cdr->car);
-    case PRINT:
-      correct_number_args("print", 1, args);
-      return print(eval(args->car));
-    case SET:
-      correct_number_args("set", 2, args);
-      return set(args->car, eval(args->cdr->car));
-    case WHILE:
-      correct_number_args("while", 2, args);
-      return loop_while(args->car, args->cdr->car);
-    default: /*QUOTE*/
-      correct_number_args("quote", 1, args);
-      return quote(args->car);
-  }
+  error("Wrong argument type - %s. (Expected integer)\n", types[args->car->type]);
 }
 
 /* Call function using args as a list of arguments.
@@ -521,52 +486,54 @@ static object_t *call_builtin(builtin_t builtin, cons_t *args) {
 
 object_t *apply(object_t *function, cons_t *args) {
   switch (function->type) {
-    case BUILTIN:
-      return call_builtin(function->builtin, args);
-    case PREDICATE:
-      return call_predicate(args, function->predicate);
-    case OPERATOR:
-      correct_number_args(strop(function->operator), 2, args);
-      return call_operator(function->operator, args);
+    case PRIMITIVE:
+      return function->primitive(args);
     case SYMBOL:
       function = eval(function);
       return apply(function, args);
-    case LIST:
-      if (function->cell->car->builtin == LAMBDA) {
-        /*Parameters in the lambda's "signature"*/
-        cons_t *parameters = function->cell->cdr->car->cell;
-        /*Arguments passed to the lambda*/
-        cons_t *args_head = args;
-        /*The lambda's body */
-        cons_t *body = function->cell->cdr->cdr;
+    case PROCEDURE:
+      {
+        cons_t *cur_param = function->procedure->params;
+        cons_t *cur_arg = args;
+        object_t *body = function->procedure->body;
 
-        if (_LIST_P(body->car) && _LIST_P(body->car->cell->car))
-          body = body->car->cell;
+         if (body == EMPTY_LIST)
+          return EMPTY_LIST;
 
-        correct_number_args("lambda", length(parameters), args);
+        cons_t *cur_exp = function->procedure->body->cell;
 
-        while (parameters != NULL) {
-          arg_insert(parameters->car, eval(args_head->car));
-          args_head = args_head->cdr;
-          parameters = parameters->cdr;
+        if (_LIST_P(cur_exp->car) && _LIST_P(cur_exp->car->cell->car))
+          cur_exp = cur_exp->car->cell;
+
+        correct_number_args(function->procedure->name,
+                            length(function->procedure->params),
+                            args);
+        while (cur_param != NULL) {
+          arg_insert(cur_param->car, eval(cur_arg->car));
+          cur_arg = cur_arg->cdr;
+          cur_param = cur_param->cdr;
+        }
+        
+        if (!_LIST_P(body) || !_LIST_P(body->cell->car))
+          return eval_nopush(body);
+
+        while (cur_exp->cdr != NULL) {
+          eval(cur_exp->car);
+          cur_exp = cur_exp->cdr;
         }
 
-        while (body->cdr != NULL) {
-          eval(body->car);
-          body = body->cdr;
-        }
-        /*Reached the end of function.*/
-        return eval(body->car);
+        return eval(cur_exp->car);
       }
     default:
       fprintf(stderr, "Invalid Function: ");
       print_obj(function, stderr);
-      error("\n");
+      fprintf(stderr, "\n");
+      goto_top();
   }
 }
 
 /* Evaluate object */
-object_t *eval(object_t *obj) {
+object_t *_eval(object_t *obj, bool push) {
   if (obj == NULL) return NULL;
 
   switch (obj->type) {
@@ -574,10 +541,6 @@ object_t *eval(object_t *obj) {
       if (obj == EMPTY_LIST) return EMPTY_LIST;
 
       mark(obj);
-
-      if (obj->cell->car->type == BUILTIN && obj->cell->car->builtin == LAMBDA)
-        return correct_number_args("lambda", 2, obj->cell->cdr), obj;
-
       env_push();
       object_t *val = apply(obj->cell->car, obj->cell->cdr);
       env_pop();
@@ -600,38 +563,51 @@ object_t *eval(object_t *obj) {
   }
 }
 
-char *builtin_syms[BUILTIN_LEN];
+inline object_t *eval(object_t *obj)
+{
+  return _eval(obj, true);
+}
 
-/*Initialize all builtins, including procedures, predicates, and operators*/
+inline object_t *eval_nopush(object_t *obj)
+{
+  return _eval(obj, false);
+}
+
+void add_primitive(char *name, primitive_t function)
+{
+  object_t *p = ERR_MALLOC(sizeof(object_t));
+  p->type = PRIMITIVE;
+  p->primitive = function;
+  object_t *n = ERR_MALLOC(sizeof(object_t));
+  n->type = SYMBOL;
+  n->string = strdup(name);
+  arg_insert(n, p);
+}
+
+/*Initialize all builtin primitives and constants*/
 void builtins_init() {
-  char *tmp[BUILTIN_LEN] = {
-      "and", "car", "cdr", "cons", "define", "eval", "exit", "garbage-collect",
-      "if", "lambda", "length", "not", "or", "print", "quote", "set", "while",
-      "integer?", "float?", "number?", "string?", "symbol?", "list?", "lambda?",
-      "boolean?", "eqv?", "equal?"};
-  for (int i = 0; i < BUILTIN_LEN; i++) builtin_syms[i] = tmp[i];
 
-  for (builtin_t i = AND; i <= WHILE; i++) {
-    builtins[i] = ERR_MALLOC(sizeof(object_t));
-    builtins[i]->type = BUILTIN;
-    builtins[i]->builtin = i;
-  }
-
-  for (predicate_t i = INTEGER_P; i <= EQUAL_P; i++) {
-    int index = WHILE + i + 1;
-
-    builtins[index] = ERR_MALLOC(sizeof(object_t));
-    builtins[index]->type = PREDICATE;
-    builtins[index]->predicate = i;
-  }
-
-  for (operator_t i = ADD; i <= LESSER_EQ; i++) {
-    int index = WHILE + EQUAL_P + i + 2;
-
-    builtins[index] = ERR_MALLOC(sizeof(object_t));
-    builtins[index]->type = OPERATOR;
-    builtins[index]->operator= i;
-  }
+  add_primitive("+", add_list);
+  add_primitive("-", subtract_list);
+  add_primitive("*", multiply_list);
+  add_primitive("/", divide_list);
+  add_primitive(">", greater);
+  add_primitive("<", lesser);
+  add_primitive("and", and);
+  add_primitive("or", or);
+  add_primitive("not", not);
+  add_primitive("while", loop_while);
+  add_primitive("cons", cons);
+  add_primitive("if", if_else);
+  add_primitive("set", set);
+  add_primitive("define", define);
+  add_primitive("quote", quote);
+  add_primitive("eqv?", eqv);
+  add_primitive("equal?", equal);
+  add_primitive("car", car);
+  add_primitive("cdr", cdr);
+  add_primitive("lambda", lambda);
+  add_primitive("exit", exit_status);
 
   CONST_TRUE = ERR_MALLOC(sizeof(object_t));
   CONST_TRUE->type = BOOLEAN;
@@ -644,9 +620,13 @@ void builtins_init() {
   EMPTY_LIST = ERR_MALLOC(sizeof(object_t));
   EMPTY_LIST->type = LIST;
 
-#ifdef DEBUG
-  printf("Initialised builtins\n");
-#endif
+  ZERO = ERR_MALLOC(sizeof(object_t));
+  ZERO->type = INTEGER;
+  ZERO->integer = 0;
+
+  ONE = ERR_MALLOC(sizeof(object_t));
+  ONE->type = INTEGER;
+  ONE->integer = 1;
 }
 
 /* Local Variables:  */

@@ -39,59 +39,27 @@ typedef enum types {
   SYMBOL,
   LIST,
   BOOLEAN,
-  BUILTIN,
-  OPERATOR,
-  PREDICATE,
+  PRIMITIVE,
+  PROCEDURE,
   ENVIRONMENT
 } type_t;
-
-typedef enum {
-  AND,
-  CAR,
-  CDR,
-  CONS,
-  DEFINE,
-  EVAL,
-  EXIT,
-  GC,
-  IF,
-  LAMBDA,
-  LENGTH,
-  NOT,
-  OR,
-  PRINT,
-  QUOTE,
-  SET,
-  WHILE
-} builtin_t;
-
-typedef enum {
-  ADD,
-  SUBTRACT,
-  DIVIDE,
-  MULTIPLY,
-  GREATER,
-  GREATER_EQ,
-  LESSER,
-  LESSER_EQ
-} operator_t;
-
-typedef enum {
-  INTEGER_P,
-  FLOAT_P,
-  NUMBER_P,
-  STRING_P,
-  SYMBOL_P,
-  LIST_P,
-  LAMBDA_P,
-  BOOLEAN_P,
-  EQV_P,
-  EQUAL_P
-} predicate_t;
 
 #define BUILTIN_LEN 27
 extern char *builtin_syms[];
 struct cons;
+
+struct obj_list {
+  struct _object_t *val;
+  struct obj_list *next;
+  struct obj_list *prev;
+};
+
+typedef struct _object_t *(*primitive_t)(struct cons *);
+typedef struct proc {
+  char *name;
+  struct cons *params;
+  struct _object_t *body;
+} procedure_t;
 
 typedef struct _object_t {
   type_t type;
@@ -104,11 +72,9 @@ typedef struct _object_t {
     char character;
     struct cons *cell;
     bool boolean;
-    
-    builtin_t builtin;
-    operator_t operator;
-    predicate_t predicate;
 
+    procedure_t *procedure; 
+    primitive_t primitive;
     /*This allows environments to be GC'd*/
     struct env *env;
   };
@@ -120,10 +86,7 @@ typedef struct cons {
 } cons_t;
 
 extern cons_t *tok_to_cons(char **tokens, char *types, int *index);
-extern char *strpred(predicate_t pred);
-extern char *strop(operator_t op);
 extern int length(cons_t *list);
-extern char *strtype(type_t type);
 extern char *repr(object_t *obj);
 extern void print_obj(object_t *obj, FILE *stream);
 

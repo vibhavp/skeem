@@ -31,27 +31,6 @@
 #include "types.h"
 #include "token.h"
 
-char *strtype(type_t type) {
-  switch (type) {
-    case INTEGER:
-      return "integer";
-    case FLOAT:
-      return "float";
-    case CHAR:
-      return "char";
-    case STRING:
-      return "string";
-    case SYMBOL:
-      return "symbol";
-    case LIST:
-      return "list";
-    case BOOLEAN:
-      return "boolean";
-    default: /*builtin*/
-      return "procedure";
-  }
-}
-
 int length(cons_t *list) {
   if (list == NULL) return 0;
 
@@ -65,18 +44,6 @@ int length(cons_t *list) {
   return len;
 }
 
-char *strop(operator_t op) {
-  switch (op) {
-    case ADD:
-      return "+";
-    case SUBTRACT:
-      return "-";
-    case DIVIDE:
-      return "/";
-    default: /*Multiply*/
-      return "*";
-  }
-}
 
 void print_obj(object_t *obj, FILE *stream) {
   switch (obj->type) {
@@ -114,50 +81,12 @@ void print_obj(object_t *obj, FILE *stream) {
       }
       print_obj(cur->car, stream);
       fprintf(stream, ")");
-    } break;
-    case BUILTIN:
-      fprintf(stream, "%s", builtin_syms[obj->builtin]);
-      break;
-    case PREDICATE:
-      fprintf(stream, "%s", builtin_syms[PREDICATE(obj->predicate)]);
-      break;
-    case OPERATOR: {
-      char op;
-      switch (obj->operator) {
-        case ADD:
-          op = '+';
-          break;
-        case MULTIPLY:
-          op = '*';
-          break;
-        case DIVIDE:
-          op = '/';
-          break;
-        case SUBTRACT:
-          op = '-';
-          break;
-      }
-      fprintf(stream, "%c", op);
-      break;
     }
-  }
-}
-
-char *strpred(predicate_t pred) {
-  switch (pred) {
-    case INTEGER_P:
-      return "integer?";
-    case FLOAT_P:
-      return "float?";
-    case NUMBER_P:
-      return "number?";
-    case STRING_P:
-      return "string?";
-    case SYMBOL_P:
-      return "symbol?";
-    case LIST_P:
-      return "list?";
-    default: /*LAMBDA_P*/
-      return "lambda?";
+      break;
+    case PRIMITIVE:
+      fprintf(stream, "<builtin procedure>");
+      break;
+    case PROCEDURE:
+      fprintf(stream, "<procedure %s>", obj->procedure->name);
   }
 }
