@@ -1,5 +1,6 @@
 (define (assert x) (if (not x)
-		       (exit 1)))
+		       (exit 1)
+		       #t))
 (assert (equal? 1 1))
 (assert (equal? 2 (+ 1 1)))
 (assert (equal? 0 (- 1 1)))
