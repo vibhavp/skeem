@@ -40,6 +40,14 @@ struct bind_tree {
   struct bind_tree *right;
 };
 
+struct env {
+  struct bind_tree *tree;
+  object_t *next;
+  object_t *prev;
+};
+
+object_t *env_global, *env_head;
+
 extern cons_t *cons_init();
 extern void cons_free(cons_t *cell);
 extern object_t *obj_init(type_t type);

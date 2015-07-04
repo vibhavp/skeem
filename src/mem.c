@@ -28,15 +28,6 @@
 #include <setjmp.h>
 #include <stdlib.h>
 
-/*Variables for GC purposes*/
-struct env {
-  struct bind_tree *tree;
-  object_t *next;
-  object_t *prev;
-};
-
-object_t *env_global, *env_head;
-
 static unsigned int max_obj = INIT_GC_THRESHOLD, num_obj;
 /*Stores all allocated objects. Used by sweep()*/
 static struct obj_list *heap = NULL, *heap_head = NULL;
@@ -144,6 +135,9 @@ object_t *obj_init(type_t type) {
   else if (type == PROCEDURE) {
     obj->procedure = ERR_MALLOC(sizeof(procedure_t));
   }
+  else if (type == CLOSURE)
+    obj->closure = ERR_MALLOC(sizeof(closure_t));
+
   num_obj += 1;
   return obj;
 }
@@ -296,6 +290,7 @@ inline void env_insert(object_t *symbol, object_t *val) {
   tree_insert(env_head->env->prev->env->tree, symbol, val);
 }
 
+/**/
 inline void arg_insert(object_t *symbol, object_t *val) {
   tree_insert(env_head->env->tree, symbol, val);
 }
