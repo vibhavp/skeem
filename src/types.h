@@ -41,6 +41,7 @@ typedef enum types {
   BOOLEAN,
   PRIMITIVE,
   PROCEDURE,
+  CLOSURE,
   ENVIRONMENT
 } type_t;
 
@@ -60,7 +61,11 @@ typedef struct proc {
   struct cons *params;
   struct _object_t *body;
 } procedure_t;
-
+typedef struct closure {
+  struct cons *params;
+  struct _object_t *body;
+  struct _object_t *env;
+} closure_t;
 typedef struct _object_t {
   type_t type;
   bool marked;
@@ -73,7 +78,8 @@ typedef struct _object_t {
     struct cons *cell;
     bool boolean;
 
-    procedure_t *procedure; 
+    procedure_t *procedure;
+    closure_t *closure;
     primitive_t primitive;
     /*This allows environments to be GC'd*/
     struct env *env;
