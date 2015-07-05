@@ -4,7 +4,7 @@ SRCS = builtins.c mem.c token.c types.c
 OBJS = builtins.o mem.o token.o types.o
 DOBJS = builtins.do mem.do token.do types.do
 FLAGS = -std=gnu1x $(CFLAGS)
-DEBUGFLAGS = -g -DDEBUG $(FLAGS)
+DEBUGFLAGS = -g -O0 -DDEBUG -fno-inline $(FLAGS)
 RELEASEFLAGS = -O2 $(FLAGS)
 
 default: release tests
