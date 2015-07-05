@@ -88,5 +88,8 @@ void print_obj(object_t *obj, FILE *stream) {
       break;
     case PROCEDURE:
       fprintf(stream, "<procedure %s>", obj->procedure->name);
+      break;
+    case CLOSURE:
+      fprintf(stream, "<closure>");
   }
 }

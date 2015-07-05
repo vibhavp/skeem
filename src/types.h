@@ -62,8 +62,7 @@ typedef struct proc {
   struct _object_t *body;
 } procedure_t;
 typedef struct closure {
-  struct cons *params;
-  struct _object_t *body;
+  procedure_t *procedure;
   struct _object_t *env;
 } closure_t;
 typedef struct _object_t {
