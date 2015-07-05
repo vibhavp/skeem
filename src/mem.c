@@ -142,14 +142,22 @@ object_t *obj_init(type_t type) {
   return obj;
 }
 
-void bind_tree_free(struct bind_tree *tree) {
-  if (tree != NULL) {
+void bind_tree_free(struct bind_tree *tree)
+{
+  if (tree != NULL) { 
     bind_tree_free(tree->left);
     struct bind_tree *right = tree->right;
     free(tree->symbol);
     free(tree);
     bind_tree_free(right);
   }
+}
+
+void free_procedure(procedure_t *proc)
+{
+  free(proc->name);
+  obj_free(proc->body);
+  free(proc->params);
 }
 
 void obj_free(object_t *obj) {
@@ -164,24 +172,50 @@ void obj_free(object_t *obj) {
     case LIST:
       free(obj->cell);
       break;
+    case PROCEDURE:
+      free_procedure(obj->procedure);
+      break;
+    case CLOSURE:
+      free_procedure(obj->procedure);
+      bind_tree_free(obj->closure->env->env->tree);
     default:
       break;
   }
   free(obj);
 }
 
-void mark(object_t *obj) {
+void mark_list(cons_t *cur);
+void mark(object_t *obj)
+{
   if (obj->marked) return;
 
   obj->marked = true;
 
-  if (obj->type == LIST) {
-    cons_t *cur = obj->cell;
+  switch (obj->type) {
+    case LIST:
+      mark_list(obj->cell);
+      return;
+    case PROCEDURE:
+      mark_list(obj->procedure->params);
+      mark(obj->procedure->body);
+      return;
+    case CLOSURE:
+      mark(obj->closure->procedure->body);
+      mark_list(obj->closure->procedure->params);
+      mark(obj->closure->env);
+    default:
+      return;
+  }
+}
 
-    while (cur != NULL) {
-      mark(cur->car);
-      cur = cur->cdr;
-    }
+void mark_list(cons_t *cell)
+{
+  if (cell->car ==  NULL) /*Empty list*/
+    return;
+  cons_t *cur = cell;
+  while (cur != NULL) {
+    mark(cur->car);
+    cur = cur->cdr;
   }
 }
 
@@ -396,10 +430,10 @@ inline void env_pop() {
 #if GCC_VERSION >= 40700
 _Noreturn
 #endif
-    void
-    goto_top() {
-  while (env_head->env->next != NULL) env_pop();
+void
+goto_top() {
+  while (env_head->env->prev != NULL) env_pop();
   while (pinned != NULL) unpin_head();
-
+  
   longjmp(err, 1);
 }
