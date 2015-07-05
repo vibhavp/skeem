@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     obj = eval(obj);
 
     if (stream == stdin) {
-      printf("\n=> ");
+      printf("=> ");
       fflush(stdout);
       print_obj(obj, stdout);
       putchar('\n');
