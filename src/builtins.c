@@ -36,11 +36,11 @@
 
 static object_t *ZERO, *ONE;
 
-char *types[8] = {"integer", "float", "string", "symbol", "list",
-                  "boolean", "procedure", "procedure"};
+char *types[9] = {"integer", "float", "string", "symbol", "list",
+                  "boolean", "procedure", "procedure", "closure"};
 
-inline object_t *eval(object_t *);
-inline object_t *eval_nopush(object_t *);
+object_t *eval(object_t *);
+object_t *eval_nopush(object_t *);
 
 void add(object_t *n1, object_t *n2, object_t *result) {
 
@@ -448,10 +448,8 @@ object_t *cdr(cons_t *args)
 {
   assert_arity(1);
 
-  if (args->car->type != LIST) {
+  if (args->car->type != LIST)
     error("Wrong argument type - %s. (Expected list)\n", types[args->car->type]);
-
-  }
   object_t *o = obj_init(LIST);
   o->cell = args->car->cell->cdr;
   return o->cell == NULL ? EMPTY_LIST : o;
@@ -478,11 +476,53 @@ object_t *exit_status(cons_t *args)
   error("Wrong argument type - %s. (Expected integer)\n", types[args->car->type]);
 }
 
-/* Call function using args as a list of arguments.
- * ((lambda (a b c) (+ a b c)) 1 2 3)
- *  |_______________________|  |___|
- *             car              cdr
- */
+
+object_t *apply_procedure(procedure_t *procedure, cons_t *args)
+{
+  cons_t *cur_param = procedure->params;
+  cons_t *cur_arg = args;
+  object_t *body = procedure->body;
+  
+  if (body == EMPTY_LIST)
+    return EMPTY_LIST;
+  
+  cons_t *cur_exp = procedure->body->cell;
+  
+  if (_LIST_P(cur_exp->car) && _LIST_P(cur_exp->car->cell->car))
+    cur_exp = cur_exp->car->cell;
+  
+  correct_number_args(procedure->name,
+                      length(procedure->params),
+                      args);
+  while (cur_param != NULL) {
+    arg_insert(cur_param->car, eval(cur_arg->car));
+    cur_arg = cur_arg->cdr;
+    cur_param = cur_param->cdr;
+  }
+  
+  object_t *last;
+  if (!_LIST_P(body) || !_LIST_P(body->cell->car)) {
+    last = eval_nopush(body);
+    goto closure_check;
+  }
+  
+  while (cur_exp->cdr != NULL) {
+    eval(cur_exp->car);
+    cur_exp = cur_exp->cdr;
+  }
+  
+  last = eval(cur_exp->car);
+
+closure_check:
+  /*closure*/
+  if (last->type == PROCEDURE) {
+    object_t *cl = obj_init(CLOSURE);
+    cl->closure->procedure = last->procedure;
+    cl->closure->env = env_head;
+    return cl;
+  }
+  return last;
+}
 
 object_t *apply(object_t *function, cons_t *args) {
   switch (function->type) {
@@ -492,38 +532,14 @@ object_t *apply(object_t *function, cons_t *args) {
       function = eval(function);
       return apply(function, args);
     case PROCEDURE:
-      {
-        cons_t *cur_param = function->procedure->params;
-        cons_t *cur_arg = args;
-        object_t *body = function->procedure->body;
-
-         if (body == EMPTY_LIST)
-          return EMPTY_LIST;
-
-        cons_t *cur_exp = function->procedure->body->cell;
-
-        if (_LIST_P(cur_exp->car) && _LIST_P(cur_exp->car->cell->car))
-          cur_exp = cur_exp->car->cell;
-
-        correct_number_args(function->procedure->name,
-                            length(function->procedure->params),
-                            args);
-        while (cur_param != NULL) {
-          arg_insert(cur_param->car, eval(cur_arg->car));
-          cur_arg = cur_arg->cdr;
-          cur_param = cur_param->cdr;
-        }
-        
-        if (!_LIST_P(body) || !_LIST_P(body->cell->car))
-          return eval_nopush(body);
-
-        while (cur_exp->cdr != NULL) {
-          eval(cur_exp->car);
-          cur_exp = cur_exp->cdr;
-        }
-
-        return eval(cur_exp->car);
-      }
+      return apply_procedure(function->procedure, args);
+    case CLOSURE:
+      function->closure->env->env->prev = env_head;
+      env_head->env->next = function->closure->env;
+      env_head = env_head->env->next;
+      object_t *val = apply_procedure(function->closure->procedure, args);
+      env_pop();
+      return val;
     default:
       fprintf(stderr, "Invalid Function: ");
       print_obj(function, stderr);
@@ -541,9 +557,9 @@ object_t *_eval(object_t *obj, bool push) {
       if (obj == EMPTY_LIST) return EMPTY_LIST;
 
       mark(obj);
-      env_push();
+      if (push) env_push();
       object_t *val = apply(obj->cell->car, obj->cell->cdr);
-      env_pop();
+      if (push) env_pop();
 
       return val;
     }
@@ -584,6 +600,13 @@ void add_primitive(char *name, primitive_t function)
   arg_insert(n, p);
 }
 
+object_t *garbage_collect(cons_t *args)
+{
+  assert_arity(0);
+  gc();
+  return CONST_TRUE;
+}
+
 /*Initialize all builtin primitives and constants*/
 void builtins_init() {
 
@@ -608,6 +631,7 @@ void builtins_init() {
   add_primitive("cdr", cdr);
   add_primitive("lambda", lambda);
   add_primitive("exit", exit_status);
+  add_primitive("garbage-collect", garbage_collect);
 
   CONST_TRUE = ERR_MALLOC(sizeof(object_t));
   CONST_TRUE->type = BOOLEAN;
