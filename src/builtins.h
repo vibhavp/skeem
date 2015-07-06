@@ -33,10 +33,9 @@
 #define _STRING_P(n) ((n)->type == STRING)
 #define _SYMBOL_P(n) ((n)->type == SYMBOL)
 #define _LIST_P(n) ((n)->type == LIST)
-#define _LAMBDA_P(n)                                  \
-  (_LIST_P((n)) && (n)->cell->car->type == BUILTIN && \
-   (n)->cell->car->builtin == LAMBDA)
+#define _PROCEDURE_P(n) ((n)->type == PROCEDURE)
 #define _BOOLEAN_P(n) ((n)->type == BOOLEAN)
+#define _CLOSURE_P(n) ((n)->type == CLOSURE)
 
 extern object_t *eval(object_t *obj);
 extern void builtins_init();
