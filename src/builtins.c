@@ -607,9 +607,63 @@ object_t *garbage_collect(cons_t *args)
   return CONST_TRUE;
 }
 
-/*Initialize all builtin primitives and constants*/
-void builtins_init() {
+object_t *integer_p(cons_t *args)
+{
+  assert_arity(1);
+  return BOOL_TO_OBJ(_INTEGER_P(args->car));
+}
 
+object_t *float_p(cons_t *args)
+{
+  assert_arity(1);
+  return BOOL_TO_OBJ(_FLOAT_P(args->car));
+}
+
+object_t *number_p(cons_t *args)
+{
+  assert_arity(1);
+  return BOOL_TO_OBJ(_NUMBER_P(args->car));
+}
+
+object_t *string_p(cons_t *args)
+{
+  assert_arity(1);
+  return BOOL_TO_OBJ(_STRING_P(args->car));
+}
+
+object_t *symbol_p(cons_t *args)
+{
+  assert_arity(1);
+  return BOOL_TO_OBJ(_SYMBOL_P(args->car));
+}
+
+object_t *list_p(cons_t *args)
+{
+  assert_arity(1);
+  return BOOL_TO_OBJ(_LIST_P(args->car));
+}
+
+object_t *procedure_p(cons_t *args)
+{
+  assert_arity(1);
+  return BOOL_TO_OBJ(_PROCEDURE_P(args->car));
+}
+
+object_t *boolean_p(cons_t *args)
+{
+  assert_arity(1);
+  return BOOL_TO_OBJ(_BOOLEAN_P(args->car));
+}
+
+object_t *closure_p(cons_t *args)
+{
+  assert_arity(1);
+  return BOOL_TO_OBJ(_CLOSURE_P(args->car));
+}
+
+/*Initialize all builtin primitives and constants*/
+void builtins_init()
+{
   add_primitive("+", add_list);
   add_primitive("-", subtract_list);
   add_primitive("*", multiply_list);
@@ -632,7 +686,17 @@ void builtins_init() {
   add_primitive("lambda", lambda);
   add_primitive("exit", exit_status);
   add_primitive("garbage-collect", garbage_collect);
-
+  /*Predicates*/
+  add_primitive("integer?", integer_p);
+  add_primitive("float?", float_p);
+  add_primitive("number?", number_p);
+  add_primitive("string?", string_p);
+  add_primitive("symbol?", symbol_p);
+  add_primitive("list?", list_p);
+  add_primitive("procedure?", procedure_p);
+  add_primitive("boolean?", boolean_p);
+  add_primitive("closure?", closure_p);
+  
   CONST_TRUE = ERR_MALLOC(sizeof(object_t));
   CONST_TRUE->type = BOOLEAN;
   CONST_TRUE->boolean = true;
