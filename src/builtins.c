@@ -661,6 +661,13 @@ object_t *closure_p(cons_t *args)
   return BOOL_TO_OBJ(_CLOSURE_P(args->car));
 }
 
+object_t *print(cons_t *args)
+{
+  assert_arity(1);
+  print_obj(args->car, stdout);
+  return CONST_TRUE;
+}
+
 /*Initialize all builtin primitives and constants*/
 void builtins_init()
 {
@@ -686,6 +693,7 @@ void builtins_init()
   add_primitive("lambda", lambda);
   add_primitive("exit", exit_status);
   add_primitive("garbage-collect", garbage_collect);
+  add_primitive("print", print);
   /*Predicates*/
   add_primitive("integer?", integer_p);
   add_primitive("float?", float_p);
