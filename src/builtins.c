@@ -683,7 +683,7 @@ void builtins_init()
   add_primitive("while", loop_while);
   add_primitive("cons", cons);
   add_primitive("if", if_else);
-  add_primitive("set", set);
+  add_primitive("set!", set);
   add_primitive("define", define);
   add_primitive("quote", quote);
   add_primitive("eqv?", eqv);
