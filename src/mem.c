@@ -156,7 +156,6 @@ void bind_tree_free(struct bind_tree *tree)
 void free_procedure(procedure_t *proc)
 {
   free(proc->name);
-  obj_free(proc->body);
   free(proc->params);
 }
 
