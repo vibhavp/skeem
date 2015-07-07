@@ -56,15 +56,18 @@ struct obj_list {
 };
 
 typedef struct _object_t *(*primitive_t)(struct cons *);
+
 typedef struct proc {
   char *name;
   struct cons *params;
   struct _object_t *body;
 } procedure_t;
+
 typedef struct closure {
   procedure_t *procedure;
   struct _object_t *env;
 } closure_t;
+
 typedef struct _object_t {
   type_t type;
   bool marked;
