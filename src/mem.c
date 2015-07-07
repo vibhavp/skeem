@@ -112,7 +112,7 @@ void mem_init() {
 }
 
 object_t *obj_init(type_t type) {
-  if (num_obj == max_obj && !no_gc) gc();
+  if (num_obj >= max_obj && !no_gc) gc();
 
   object_t *obj = ERR_MALLOC(sizeof(object_t));
   obj->type = type;
@@ -161,6 +161,11 @@ void free_procedure(procedure_t *proc)
 }
 
 void obj_free(object_t *obj) {
+#ifdef DEBUG
+  printf("freed ");
+  print_obj(obj, stdout);
+  printf("\n");
+#endif
   switch (obj->type) {
     case ENVIRONMENT:
       bind_tree_free(obj->env->tree);
