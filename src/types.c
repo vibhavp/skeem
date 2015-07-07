@@ -91,5 +91,8 @@ void print_obj(object_t *obj, FILE *stream) {
       break;
     case CLOSURE:
       fprintf(stream, "<closure>");
+      break;
+    case ENVIRONMENT:
+      fprintf(stream, "<environment>");
   }
 }
