@@ -245,10 +245,6 @@ void clear_tokens() {
   token_t *cur = tokens, *next;
 
   while (cur != NULL) {
-#ifdef DEBUG
-    printf("Cleared token\n");
-#endif
-
     next = cur->next;
     free(cur);
     cur = next;
