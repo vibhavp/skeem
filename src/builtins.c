@@ -476,7 +476,6 @@ object_t *exit_status(cons_t *args)
   error("Wrong argument type - %s. (Expected integer)\n", types[args->car->type]);
 }
 
-
 object_t *apply_procedure(procedure_t *procedure, cons_t *args)
 {
   cons_t *cur_param = procedure->params;
@@ -517,8 +516,8 @@ closure_check:
   /*closure*/
   if (last->type == PROCEDURE) {
     object_t *cl = obj_init(CLOSURE);
-    cl->closure->procedure = last->procedure;
     cl->closure->env = env_head;
+    cl->closure->proc = last; 
     return cl;
   }
   return last;
@@ -538,7 +537,7 @@ object_t *apply(object_t *function, cons_t *args)
       function->closure->env->env->prev = env_head;
       env_head->env->next = function->closure->env;
       env_head = env_head->env->next;
-      object_t *val = apply_procedure(function->closure->procedure, args);
+      object_t *val = apply_procedure(function->closure->proc->procedure, args);
       env_pop();
       return val;
     default:

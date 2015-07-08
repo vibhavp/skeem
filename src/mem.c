@@ -111,7 +111,8 @@ void mem_init() {
   env_head = env_global;
 }
 
-object_t *obj_init(type_t type) {
+object_t *obj_init(type_t type)
+{
   if (num_obj >= max_obj && !no_gc) gc();
 
   object_t *obj = ERR_MALLOC(sizeof(object_t));
@@ -159,7 +160,8 @@ void free_procedure(procedure_t *proc)
   free(proc->params);
 }
 
-void obj_free(object_t *obj) {
+void obj_free(object_t *obj)
+{
 #ifdef DEBUG
   printf("freed ");
   print_obj(obj, stdout);
@@ -178,9 +180,11 @@ void obj_free(object_t *obj) {
       break;
     case PROCEDURE:
       free_procedure(obj->procedure);
+      free(obj->procedure->name);
+      free(obj->procedure->params);
       break;
     case CLOSURE:
-      free_procedure(obj->procedure);
+      free_procedure(obj->closure->proc->procedure);
       bind_tree_free(obj->closure->env->env->tree);
     default:
       break;
@@ -189,6 +193,7 @@ void obj_free(object_t *obj) {
 }
 
 void mark_list(cons_t *cur);
+void mark_bind_tree(struct bind_tree *tree);
 void mark(object_t *obj)
 {
   if (obj->marked) return;
@@ -204,9 +209,11 @@ void mark(object_t *obj)
       mark(obj->procedure->body);
       return;
     case CLOSURE:
-      mark(obj->closure->procedure->body);
-      mark_list(obj->closure->procedure->params);
+      mark(obj->closure->proc);
       mark(obj->closure->env);
+      return;
+    case ENVIRONMENT:
+      mark_bind_tree(obj->env->tree);
     default:
       return;
   }
@@ -223,7 +230,8 @@ void mark_list(cons_t *cell)
   }
 }
 
-void mark_bind_tree(struct bind_tree *tree) {
+void mark_bind_tree(struct bind_tree *tree)
+{
   if (tree != NULL) {
     mark_bind_tree(tree->left);
     mark(tree->symbol);

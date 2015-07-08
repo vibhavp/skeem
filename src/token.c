@@ -116,7 +116,6 @@ token_t *str_to_tok(char *word) {
     default:
       return tok;
   }
-  return NULL;
 }
 
 void add_token(char *str) {

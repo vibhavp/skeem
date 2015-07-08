@@ -64,7 +64,7 @@ typedef struct proc {
 } procedure_t;
 
 typedef struct closure {
-  procedure_t *procedure;
+  struct _object_t *proc;
   struct _object_t *env;
 } closure_t;
 
