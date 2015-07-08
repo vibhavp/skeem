@@ -462,7 +462,7 @@ object_t *lambda(cons_t *args)
   if (!_LIST_P(args->car))
     error("Wrong argument type - %s (Expected list)\n", types[args->car->type]);
 
-  return make_procedure("lambda", args->car->cell, args->cdr->car);
+  return make_procedure(strdup("lambda"), args->car->cell, args->cdr->car);
 }
 
 #if GCC_VERSION >= 40700
@@ -524,7 +524,8 @@ closure_check:
   return last;
 }
 
-object_t *apply(object_t *function, cons_t *args) {
+object_t *apply(object_t *function, cons_t *args)
+{
   switch (function->type) {
     case PRIMITIVE:
       return function->primitive(args);
@@ -549,20 +550,22 @@ object_t *apply(object_t *function, cons_t *args) {
 }
 
 /* Evaluate object */
-object_t *_eval(object_t *obj, bool push) {
+object_t *_eval(object_t *obj, bool push)
+{
   if (obj == NULL) return NULL;
 
   switch (obj->type) {
-    case LIST: {
-      if (obj == EMPTY_LIST) return EMPTY_LIST;
-
-      mark(obj);
-      if (push) env_push();
-      object_t *val = apply(obj->cell->car, obj->cell->cdr);
-      if (push) env_pop();
-
-      return val;
-    }
+    case LIST:
+      {
+        if (obj == EMPTY_LIST) return EMPTY_LIST;
+        
+        mark(obj);
+        if (push) env_push();
+        object_t *val = apply(obj->cell->car, obj->cell->cdr);
+        if (push) env_pop();
+        
+        return val;
+      }
     case SYMBOL: {
       object_t *result = env_lookup(obj);
 
